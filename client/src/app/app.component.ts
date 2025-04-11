@@ -1,12 +1,66 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { ThemeService } from './theme/theme.service';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatToolbarModule,
+    MatSidenavModule,
+    MatIconModule,
+    MatButtonModule,
+    MatListModule,
+  ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.sass'],
 })
 export class AppComponent {
-  title = 'client';
+  title = '';
+  constructor(
+    private themeService: ThemeService,
+    private titleService: Title,
+    private router: Router,
+    private activatedRoute: ActivatedRoute,
+  ) {}
+
+  ngOnInit() {
+    this.setPageTitle();
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.setPageTitle();
+      });
+  }
+
+  toggleTheme() {
+    this.themeService.toggleTheme();
+  }
+
+  private setPageTitle() {
+    let child = this.activatedRoute.firstChild;
+    while (child) {
+      if (child.snapshot.data['title']) {
+        this.titleService.setTitle(child.snapshot.data['title']);
+        this.title =
+          child.snapshot.data['title'] === 'OATHeadless'
+            ? ''
+            : child.snapshot.data['title'];
+        return;
+      }
+      child = child.firstChild;
+    }
+    this.titleService.setTitle(this.title);
+  }
 }

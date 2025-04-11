@@ -1,0 +1,72 @@
+<div>
+  <ul>
+    <button (click)="goToPage('location')">Location & Time</button>
+    <button (click)="goToPage('deviceSetup')">Device Setup</button>
+    <button (click)="goToPage('autohoming')">Autohoming</button>
+  </ul>
+</div>
+
+<div class="form-container" *ngIf="currentPage === 'location'">
+  <h2>Location</h2>
+  <p>Manually enter your location or get your location from your device.</p>
+  <button (click)="getUserLocation()">Get Location</button>
+  <div>
+    <form [formGroup]="locationForm" (ngSubmit)="onSubmitLocation()">
+      <label for="longitude">Longitude</label>
+      <input id="longitude" formControlName="longitude" value={{longitude}} />
+      <div
+        *ngIf="
+          locationForm.controls['longitude'].invalid &&
+          locationForm.controls['longitude'].touched
+        "
+      >
+        <small *ngIf="locationForm.controls['longitude'].errors?.['required']"
+          >Longitude is required</small
+        >
+      </div>
+      <label for="latitude">Latitude</label>
+      <input id="latitude" formControlName="latitude"  value={{latitude}}/>
+      <div
+        *ngIf="
+          locationForm.controls['latitude'].invalid &&
+          locationForm.controls['latitude'].touched
+        "
+      >
+        <small *ngIf="locationForm.controls['latitude'].errors?.['required']"
+          >Latitude is required</small
+        >
+      </div>
+      <button type="submit" [disabled]="locationForm.invalid">Submit</button>
+    </form>
+  </div>
+  <h2>Time</h2>
+  <p>Use your devices time to set the time and date on your telescope.</p>
+  <button (click)="setDeviceTime()">Set Time</button>
+  <div *ngIf="useTime">
+    <p>Time was set to: {{ useTime }}</p>
+  </div>
+</div>
+
+<div class="form-container" *ngIf="currentPage === 'deviceSetup'">
+  <h2>Device Setup</h2>
+  <p>Select which ports to use for your telescope, guider, and camera.</p>
+  <h3>Telescope</h3>
+  Baudrate:<br />
+  Serial Port:
+  <h3>Guider</h3>
+  USB port:
+  <h3>Camera</h3>
+  USB port:
+</div>
+
+<div class="form-container" *ngIf="currentPage === 'autohoming'">
+  <h2>Autohome Configuration</h2>
+  RA Start Direction: East/West<br />
+  RA Search Distance: 15 degress<br />
+  Dec Start Direction: North/South<br />
+  Dec Search Distance: 15 degress<br />
+</div>
+
+<div *ngIf="errorMessage">
+  <p>Error: {{ errorMessage }}</p>
+</div>

@@ -1,0 +1,88 @@
+@use 'variables'
+@use 'themes'
+@use 'theme-utils'
+@use 'base'
+
+$input-border-radius: 4px;
+$input-padding: 8px;
+$button-padding: 10px;
+$font-size-small: 12px;
+
+// Apply theme variables to root-level classes
+.light-theme
+  @include theme-utils.generate-theme-vars(themes.$light-theme)
+
+.dark-theme
+  @include theme-utils.generate-theme-vars(themes.$dark-theme)
+
+
+mat-toolbar
+  background-color: var(--primary)
+  color: var(--text)
+
+mat-sidenav
+  background-color: var(--surface)
+  color: var(--text)
+
+body
+  font-family: Arial, sans-serif
+  font-size: 16px
+
+@media (max-width: 768px)
+  body
+    font-size: 14px
+
+  .sidenav
+    width: 100%
+
+  .mat-toolbar
+    padding: 10px
+
+  .main-content
+    padding: 10px
+
+
+.form-container
+  width: 100%
+  max-width: 400px
+  margin: 0 auto
+  padding: 20px
+  border-radius: 8px
+
+  h2
+    text-align: center
+
+  label
+    display: block
+    margin-bottom: 8px
+
+  input
+    width: 100%
+    padding: $input-padding
+    margin-bottom: 16px
+    border-radius: $input-border-radius
+
+  button
+    width: 100%
+    padding: $button-padding
+    border: none
+    border-radius: $input-border-radius
+    cursor: pointer
+    font-size: 16px
+    background-color: var(--surface)
+    color: var(--text)
+
+    &:hover:enabled
+      background-color: var(--accent)
+
+    &:disabled
+      background-color: gray
+
+  small
+    color: red
+    font-size: $font-size-small
+
+  .form-error
+    color: red
+    font-size: $font-size-small
+    margin-top: 4px

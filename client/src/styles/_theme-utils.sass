@@ -1,0 +1,9 @@
+@use 'sass:map'
+
+@mixin generate-theme-vars($theme)
+  // Outputs CSS variables under the current scope (e.g. .dark-theme or .light-theme)
+  --primary: #{map.get($theme, primary)}
+  --background: #{map.get($theme, background)}
+  --surface: #{map.get($theme, surface)}
+  --text: #{map.get($theme, text)}
+  --accent: #{map.get($theme, accent)}
