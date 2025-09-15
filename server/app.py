@@ -1,5 +1,6 @@
 """Define error handling and generic routes."""
 
+import logging
 import time
 from datetime import datetime
 from flask import Flask, abort, jsonify, request
@@ -7,6 +8,13 @@ from flask import Flask, abort, jsonify, request
 from .camera.routes import camera_bp
 from .guider.routes import guider_bp
 from .mount.routes import mount_bp
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.register_blueprint(camera_bp)
@@ -18,18 +26,21 @@ app.register_blueprint(guider_bp)
 @app.errorhandler(404)
 def not_found(e):  # pylint: disable=unused-argument
     """404 Error."""
+    logger.warning("404 Not Found: %s", request.url)
     return jsonify({"message": "Not Found."}), 404
 
 
 @app.errorhandler(400)
 def bad_request(e):  # pylint: disable=unused-argument
-    """404 Error."""
+    """400 Error."""
+    logger.warning("400 Bad Request: %s", request.url)
     return jsonify({"message": "Bad Request."}), 400
 
 
 @app.errorhandler(501)
 def not_implemented(e):  # pylint: disable=unused-argument
     """501 Error."""
+    logger.warning("501 Not Implemented: %s", request.url)
     return jsonify({"message": "Request has not been implemented."}), 501
 
 
@@ -38,20 +49,6 @@ def not_implemented(e):  # pylint: disable=unused-argument
 def index():
     """Returns a string to check if the server is responding correctla.y"""
     return jsonify({"message": "For controlling telescope mount and cameras"})
-
-
-@app.route("/status")
-def status():
-    """Returns status about connected devices.
-    Include the following:
-      current_time: system datetime
-      latitude: float or none
-      longitude: float or none
-      OAT Status: dict or none
-      Camera Port: dict or one
-      Guider Port: dict or one
-    """
-    abort(501)
 
 
 @app.route("/get_time")
@@ -71,9 +68,12 @@ def set_time():
         try:
             current_time = datetime.fromisoformat(time_string)
             time.clock_settime(time.CLOCK_REALTIME, current_time)
+            logger.info("System time set to: %s", time_string)
         except ValueError as e:
+            logger.error("Invalid time format: %s - %s", time_string, str(e))
             return jsonify({"message": str(e)}), 400
     else:
         # Request ntp sync.
+        logger.warning("NTP sync requested but not implemented")
         abort(501)
     return get_time()
