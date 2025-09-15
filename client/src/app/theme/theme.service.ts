@@ -1,16 +1,17 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
+type Theme = 'light-theme' | 'dark-theme' | 'low-light-theme';
+
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private currentTheme = 'light-theme'; // default theme
+  private currentTheme: Theme = 'light-theme';
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {
     this.initTheme();
   }
 
   private initTheme() {
-    // Check if we are in the browser before accessing window
     if (isPlatformBrowser(this.platformId)) {
       const prefersDark = window.matchMedia(
         '(prefers-color-scheme: dark)',
@@ -19,8 +20,7 @@ export class ThemeService {
     }
   }
 
-  setTheme(theme: 'light-theme' | 'dark-theme') {
-    // Check if we are in the browser before accessing document
+  setTheme(theme: Theme) {
     if (isPlatformBrowser(this.platformId)) {
       document.body.classList.remove(this.currentTheme);
       document.body.classList.add(theme);
@@ -29,9 +29,10 @@ export class ThemeService {
   }
 
   toggleTheme() {
-    const newTheme =
-      this.currentTheme === 'light-theme' ? 'dark-theme' : 'light-theme';
-    this.setTheme(newTheme); // Set the new theme
+    const themes: Theme[] = ['light-theme', 'dark-theme', 'low-light-theme'];
+    const currentIndex = themes.indexOf(this.currentTheme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    this.setTheme(themes[nextIndex]);
   }
 
   getCurrentTheme() {

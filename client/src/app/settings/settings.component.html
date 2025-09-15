@@ -13,7 +13,11 @@
   <div>
     <form [formGroup]="locationForm" (ngSubmit)="onSubmitLocation()">
       <label for="longitude">Longitude</label>
-      <input id="longitude" formControlName="longitude" value={{longitude}} />
+      <input
+        id="longitude"
+        formControlName="longitude"
+        value="{{ longitude }}"
+      />
       <div
         *ngIf="
           locationForm.controls['longitude'].invalid &&
@@ -25,7 +29,7 @@
         >
       </div>
       <label for="latitude">Latitude</label>
-      <input id="latitude" formControlName="latitude"  value={{latitude}}/>
+      <input id="latitude" formControlName="latitude" value="{{ latitude }}" />
       <div
         *ngIf="
           locationForm.controls['latitude'].invalid &&

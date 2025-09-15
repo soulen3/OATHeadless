@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -10,13 +10,13 @@ import { ReactiveFormsModule } from '@angular/forms';
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.sass',
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent {
   latitude: number | null = null;
   longitude: number | null = null;
-  errorMessage: string = '';
+  errorMessage = '';
   locationForm: FormGroup;
-  currentPage: string = 'location';
-  useTime: string = '';
+  currentPage = 'location';
+  useTime = '';
 
   constructor() {
     this.locationForm = new FormGroup({
@@ -24,8 +24,6 @@ export class SettingsComponent implements OnInit {
       latitude: new FormControl('', [Validators.required]),
     });
   }
-
-  ngOnInit(): void {}
 
   onSubmitLocation() {
     if (this.locationForm.valid) {
