@@ -125,6 +125,54 @@ class TestMountRoutes(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['action'], 'disconnected')
 
+    @patch('mount.routes.MountSerial')
+    def test_home_mount_success(self, mock_mount):
+        """Test homing both axes."""
+        mock_instance = Mock()
+        mock_instance.is_connected = True
+        mock_instance.read_data.return_value = "1"
+        mock_mount.return_value = mock_instance
+        
+        response = self.client.post('/mount/home')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['message'], "Move both axes to home")
+
+    @patch('mount.routes.MountSerial')
+    def test_home_ra_success(self, mock_mount):
+        """Test homing RA axis."""
+        mock_instance = Mock()
+        mock_instance.is_connected = True
+        mock_mount.return_value = mock_instance
+        
+        response = self.client.post('/mount/home/ra')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['message'], "Homing RA axis")
+
+    @patch('mount.routes.MountSerial')
+    def test_home_dec_success(self, mock_mount):
+        """Test homing DEC axis."""
+        mock_instance = Mock()
+        mock_instance.is_connected = True
+        mock_mount.return_value = mock_instance
+        
+        response = self.client.post('/mount/home/dec')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['message'], "Homing DEC axis")
+
+    @patch('mount.routes.MountSerial')
+    def test_home_not_connected(self, mock_mount):
+        """Test homing when mount not connected."""
+        mock_instance = Mock()
+        mock_instance.is_connected = False
+        mock_mount.return_value = mock_instance
+        
+        response = self.client.post('/mount/home')
+        self.assertEqual(response.status_code, 503)
+
+
     def test_indi_connection_missing_data(self):
         """Test INDI connection with missing data."""
         response = self.client.post('/mount/indi/connection', json={})

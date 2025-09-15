@@ -159,6 +159,59 @@ def indi_status():
         "server_running": True,
         "mount_connected": mount_connected
     })
+@mount_bp.route("/home", methods=["POST"])
+def home_mount():
+    """Move to Home. No response expected."""
+    mount = MountSerial()
+    mount.connection()
+    
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+    
+    mount.write(":hF#")  # Find home position for both axes
+    
+    mount.disconnect()
+    return jsonify({
+        "message": "Move both axes to home",
+    })
+
+
+@mount_bp.route("/home/ra", methods=["POST"])
+def home_ra():
+    """Home RA axis using Hall sensor. No response expected."""
+    mount = MountSerial()
+    mount.connection()
+    
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+    
+    mount.write(":MHRR#")  # Find home position for RA axis
+    
+    mount.disconnect()
+    return jsonify({
+        "success": True,
+        "message": "Homing RA axis"
+    })
+
+
+@mount_bp.route("/home/dec", methods=["POST"])
+def home_dec():
+    """Home DEC axis using Hall sensor. No response expected."""
+    mount = MountSerial()
+    mount.connection()
+    
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+    
+    mount.write(":MHDU#")  # Find home position for DEC axis
+    
+    mount.disconnect()
+    return jsonify({
+        "success": True,
+        "message": "Homing DEC axis"
+    })
+
+
 @mount_bp.route("/indi/connection", methods=["POST"])
 def indi_connection():
     """Connect or disconnect mount from INDI service."""
