@@ -198,7 +198,7 @@ def home_ra():
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
 
-    mount.write(":MHRR#")  # Find home position for RA axis
+    mount.write(":MHRL#")  # Find home position for RA axis
 
     mount.disconnect()
     return jsonify({"success": True, "message": "Homing RA axis"})
