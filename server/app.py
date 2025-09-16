@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime
 
-from flask import Flask, abort, jsonify, request
+from flask import Flask, abort, jsonify, request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .camera.routes import camera_bp
@@ -49,13 +49,6 @@ def not_implemented(e):  # pylint: disable=unused-argument
     return jsonify({"message": "Request has not been implemented."}), 501
 
 
-# Define routes
-@app.route("/")
-def index():
-    """Returns a string to check if the server is responding correctla.y"""
-    return jsonify({"message": "For controlling telescope mount and cameras"})
-
-
 @app.route("/devices")
 def list_devices():
     """List available serial and USB devices."""
@@ -78,6 +71,13 @@ def list_devices():
         )
 
     return jsonify({"devices": devices})
+
+
+@app.route("/")
+@app.route("/<path:path>")
+def client_app(path=None):
+    """Serve the Angular client application."""
+    return render_template("client.html")
 
 
 @app.route("/get_time")

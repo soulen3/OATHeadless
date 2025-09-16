@@ -84,6 +84,23 @@ else
 	@exit 1
 endif
 
+# Build single bundle file
+.PHONY: build-single
+build-single: build-client
+	@echo "Creating single bundle file..."
+	cd $(CLIENT_DIR)/dist/oatheadless/browser && \
+	cat polyfills-*.js chunk-*.js main-*.js > app-bundle.js && \
+	echo "Single bundle created: $(CLIENT_DIR)/dist/oatheadless/browser/app-bundle.js"
+
+# Deploy client files to Flask static directory
+.PHONY: deploy-client
+deploy-client: build-single
+	@echo "Deploying client files to Flask static directory..."
+	cp $(CLIENT_DIR)/dist/oatheadless/browser/app-bundle.js $(SERVER_DIR)/static/
+	cp $(CLIENT_DIR)/dist/oatheadless/browser/styles-*.css $(SERVER_DIR)/static/styles.css
+	cp $(CLIENT_DIR)/dist/oatheadless/browser/favicon.ico $(SERVER_DIR)/static/
+	@echo "Client files deployed to $(SERVER_DIR)/static/"
+
 # Manual build (if Angular CLI is available globally)
 .PHONY: build-manual
 build-manual:
@@ -91,13 +108,12 @@ build-manual:
 
 # Package application
 .PHONY: package
-package: build-client
+package: deploy-client
 	@echo "Creating application bundle..."
 	mkdir -p $(DIST_DIR)
-	cp -r $(CLIENT_DIR)/dist/oatheadless $(DIST_DIR)/client
-	cp -r $(SERVER_DIR) $(DIST_DIR)/server
-	cd $(DIST_DIR) && tar -czf oatheadless-bundle.tar.gz client/ server/
+	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz server/
 	@echo "Bundle created: $(DIST_DIR)/oatheadless-bundle.tar.gz"
+	@echo "Contains: Flask server + static client files"
 
 # Package server only
 .PHONY: package-server
@@ -149,6 +165,8 @@ help:
 	@echo "  dev-client     - Start Angular development server"
 	@echo "  dev-server     - Start Flask development server"
 	@echo "  build          - Build client application"
+	@echo "  build-single   - Build client and create single bundle file"
+	@echo "  deploy-client  - Deploy client files to Flask static directory"
 	@echo "  build-manual   - Build using global Angular CLI"
 	@echo "  package        - Create complete application bundle"
 	@echo "  package-server - Create server-only bundle"
