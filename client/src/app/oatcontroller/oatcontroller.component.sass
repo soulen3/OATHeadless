@@ -1,0 +1,78 @@
+.controller-container
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
+  gap: 20px
+  padding: 20px
+
+.status-card, .control-card
+  min-height: 200px
+
+.catalog-card
+  grid-column: 1 / -1
+  min-height: 400px
+
+.catalog-table
+  width: 100%
+  margin-top: 16px
+
+  th
+    font-weight: bold
+    color: #666
+
+  td
+    font-size: 14px
+
+.status-connected
+  color: #4caf50
+  font-weight: bold
+
+.status-disconnected
+  color: #f44336
+  font-weight: bold
+
+.status-tracking
+  color: #2196f3
+  font-weight: bold
+
+.status-stopped
+  color: #ff9800
+  font-weight: bold
+
+.button-row
+  display: flex
+  gap: 12px
+  flex-wrap: wrap
+
+.button-grid
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 12px
+
+  button
+    width: 100%
+
+app-coordinate-display
+  margin-bottom: 20px
+
+.target-form
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+  mat-form-field
+    width: 100%
+
+.manual-controls
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 12px
+
+.control-row
+  display: flex
+  gap: 12px
+  align-items: center
+
+  button
+    width: 56px
+    height: 56px

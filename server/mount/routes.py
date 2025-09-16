@@ -222,7 +222,7 @@ def home_dec():
 @mount_bp.route("/location", methods=["POST"])
 def set_location():
     """Set mount location coordinates.
-    
+
     Expects JSON: {"latitude": "sDD:MM:SS", "longitude": "DDD:MM:SS"}
     """
     data = request.get_json()
@@ -242,12 +242,133 @@ def set_location():
     lon_response = mount.read_data()
 
     mount.disconnect()
-    return jsonify({
-        "latitude_set": lat_response == "1",
-        "longitude_set": lon_response == "1",
-        "latitude": data["latitude"],
-        "longitude": data["longitude"]
-    })
+    return jsonify(
+        {
+            "latitude_set": lat_response == "1",
+            "longitude_set": lon_response == "1",
+            "latitude": data["latitude"],
+            "longitude": data["longitude"],
+        }
+    )
+
+
+@mount_bp.route("/home/set", methods=["POST"])
+def set_home():
+    """Set current position as home."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":SHP#")  # Set home position
+    mount.disconnect()
+    return jsonify({"message": "Home position set to current location"})
+
+
+@mount_bp.route("/home/goto", methods=["POST"])
+def goto_home():
+    """Move to home position."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":hP#")  # Go to home position
+    mount.disconnect()
+    return jsonify({"message": "Moving to home position"})
+
+
+@mount_bp.route("/move", methods=["POST"])
+def manual_move():
+    """Manual movement in cardinal directions."""
+    data = request.get_json()
+    if not data or "direction" not in data:
+        return jsonify({"error": "Missing 'direction' parameter"}), 400
+
+    direction = data["direction"].lower()
+    direction_commands = {
+        "north": ":Mn#",
+        "south": ":Ms#",
+        "east": ":Me#",
+        "west": ":Mw#",
+        "stop": ":Q#",
+    }
+
+    if direction not in direction_commands:
+        return (
+            jsonify(
+                {"error": "Invalid direction. Use: north, south, east, west, stop"}
+            ),
+            400,
+        )
+
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(direction_commands[direction])
+    mount.disconnect()
+
+    return jsonify({"message": f"Moving {direction}", "direction": direction})
+
+
+@mount_bp.route("/park", methods=["POST"])
+def park():
+    """Park the mount."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":hP#")  # Park mount (same as go home for OAT)
+    mount.disconnect()
+    return jsonify({"message": "Parking mount"})
+
+
+@mount_bp.route("/tracking", methods=["GET"])
+def get_tracking():
+    """Get current tracking status."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":GT#")
+    tracking_rate = mount.read_data()
+    mount.disconnect()
+
+    is_tracking = tracking_rate != "0.0"
+    return jsonify({"tracking": is_tracking, "rate": tracking_rate})
+
+
+@mount_bp.route("/tracking", methods=["POST"])
+def set_tracking():
+    """Enable or disable tracking."""
+    data = request.get_json()
+    if not data or "enabled" not in data:
+        return jsonify({"error": "Missing 'enabled' parameter"}), 400
+
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    if data["enabled"]:
+        mount.write(":TQ#")  # Enable tracking
+        message = "Tracking enabled"
+    else:
+        mount.write(":Td#")  # Disable tracking
+        message = "Tracking disabled"
+
+    mount.disconnect()
+    return jsonify({"message": message, "tracking": data["enabled"]})
 
 
 @mount_bp.route("/firmware")

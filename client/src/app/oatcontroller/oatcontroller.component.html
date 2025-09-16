@@ -1,1 +1,161 @@
-<p>oatcontroller module isn't implemented yet.</p>
+<div class="controller-container">
+  <!-- Status Card -->
+  <mat-card class="status-card">
+    <mat-card-header>
+      <mat-card-title>Mount Position</mat-card-title>
+      <mat-card-subtitle>
+        <span [class]="isConnected ? 'status-connected' : 'status-disconnected'">
+          {{ isConnected ? 'Connected' : 'Disconnected' }}
+        </span>
+        <span *ngIf="isConnected" [class]="isTracking ? 'status-tracking' : 'status-stopped'">
+          • {{ isTracking ? 'Tracking' : 'Stopped' }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <app-coordinate-display [ra]="currentPosition.ra" [dec]="currentPosition.dec"></app-coordinate-display>
+      <div class="button-row">
+        <button mat-raised-button color="primary" (click)="updatePosition()">
+          <mat-icon>refresh</mat-icon>
+          Refresh Position
+        </button>
+        <button mat-raised-button 
+                [color]="isTracking ? 'warn' : 'accent'" 
+                (click)="toggleTracking()" 
+                [disabled]="!isConnected">
+          <mat-icon>{{ isTracking ? 'pause' : 'play_arrow' }}</mat-icon>
+          {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Home & Park Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Home & Park</mat-card-title>
+      <mat-card-subtitle>Home position and parking controls</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="button-grid">
+        <button mat-raised-button color="accent" (click)="autoHome()" [disabled]="!isConnected">
+          <mat-icon>home</mat-icon>
+          Auto Home
+        </button>
+        <button mat-raised-button color="primary" (click)="setHome()" [disabled]="!isConnected">
+          <mat-icon>flag</mat-icon>
+          Set Home
+        </button>
+        <button mat-raised-button color="primary" (click)="gotoHome()" [disabled]="!isConnected">
+          <mat-icon>home_work</mat-icon>
+          Go to Home
+        </button>
+        <button mat-raised-button color="warn" (click)="park()" [disabled]="!isConnected">
+          <mat-icon>local_parking</mat-icon>
+          Park
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Target Selection Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Target Selection</mat-card-title>
+      <mat-card-subtitle>Set target coordinates</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="targetForm" (ngSubmit)="setTarget()" class="target-form">
+        <mat-form-field>
+          <mat-label>RA (HH:MM:SS)</mat-label>
+          <input matInput formControlName="ra" placeholder="12:34:56">
+        </mat-form-field>
+        
+        <mat-form-field>
+          <mat-label>DEC (DD:MM:SS)</mat-label>
+          <input matInput formControlName="dec" placeholder="+45:30:00">
+        </mat-form-field>
+        
+        <button mat-raised-button color="primary" type="submit" [disabled]="!isConnected || !targetForm.valid">
+          <mat-icon>my_location</mat-icon>
+          Set Target
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Manual Control Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Manual Control</mat-card-title>
+      <mat-card-subtitle>Manual mount movements</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="manual-controls">
+        <div class="control-row">
+          <button mat-fab color="primary" (click)="manualMove('north')" [disabled]="!isConnected">
+            <mat-icon>keyboard_arrow_up</mat-icon>
+          </button>
+        </div>
+        <div class="control-row">
+          <button mat-fab color="primary" (click)="manualMove('west')" [disabled]="!isConnected">
+            <mat-icon>keyboard_arrow_left</mat-icon>
+          </button>
+          <button mat-fab color="warn" (click)="manualMove('stop')" [disabled]="!isConnected">
+            <mat-icon>stop</mat-icon>
+          </button>
+          <button mat-fab color="primary" (click)="manualMove('east')" [disabled]="!isConnected">
+            <mat-icon>keyboard_arrow_right</mat-icon>
+          </button>
+        </div>
+        <div class="control-row">
+          <button mat-fab color="primary" (click)="manualMove('south')" [disabled]="!isConnected">
+            <mat-icon>keyboard_arrow_down</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <!-- Star Catalog Card -->
+  <mat-card class="catalog-card">
+    <mat-card-header>
+      <mat-card-title>Star Catalog</mat-card-title>
+      <mat-card-subtitle>Select targets from catalog</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="starCatalog" class="catalog-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let object">{{ object.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let object">{{ object.type }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="magnitude">
+          <th mat-header-cell *matHeaderCellDef>Mag</th>
+          <td mat-cell *matCellDef="let object">{{ object.magnitude }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="coordinates">
+          <th mat-header-cell *matHeaderCellDef>Coordinates</th>
+          <td mat-cell *matCellDef="let object">{{ object.ra }} / {{ object.dec }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let object">
+            <button mat-icon-button color="primary" (click)="selectCatalogTarget(object)">
+              <mat-icon>my_location</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>
