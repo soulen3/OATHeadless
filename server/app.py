@@ -56,6 +56,30 @@ def index():
     return jsonify({"message": "For controlling telescope mount and cameras"})
 
 
+@app.route("/devices")
+def list_devices():
+    """List available serial and USB devices."""
+    import serial.tools.list_ports
+
+    devices = []
+    ports = serial.tools.list_ports.comports()
+
+    for port in ports:
+        devices.append(
+            {
+                "device": port.device,
+                "description": port.description,
+                "hwid": port.hwid,
+                "vid": port.vid,
+                "pid": port.pid,
+                "manufacturer": port.manufacturer,
+                "product": port.product,
+            }
+        )
+
+    return jsonify({"devices": devices})
+
+
 @app.route("/get_time")
 def get_time():
     """Returns the systems current time."""

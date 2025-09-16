@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -9,7 +9,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MessageConsoleService } from '../message-console.service';
+
+interface Device {
+  device: string;
+  description: string;
+  hwid: string;
+  vid: number;
+  pid: number;
+  manufacturer: string;
+  product: string;
+}
 
 @Component({
   selector: 'app-settings',
@@ -22,17 +33,20 @@ import { MessageConsoleService } from '../message-console.service';
     MatButtonModule, 
     MatFormFieldModule, 
     MatInputModule, 
-    MatIconModule
+    MatIconModule,
+    MatSelectModule
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.sass',
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   latitude: number | null = null;
   longitude: number | null = null;
   errorMessage = '';
   locationForm: FormGroup;
+  deviceForm: FormGroup;
   useTime = '';
+  availableDevices: Device[] = [];
 
   constructor(
     private http: HttpClient,
@@ -42,6 +56,39 @@ export class SettingsComponent {
       longitude: new FormControl('', [Validators.required]),
       latitude: new FormControl('', [Validators.required]),
     });
+
+    this.deviceForm = new FormGroup({
+      telescopeDevice: new FormControl(''),
+      telescopeBaudrate: new FormControl(9600),
+      guiderDevice: new FormControl(''),
+      cameraDevice: new FormControl('')
+    });
+  }
+
+  ngOnInit() {
+    this.loadAvailableDevices();
+  }
+
+  loadAvailableDevices() {
+    this.messageService.addMessage('Loading available devices...', 'info');
+    
+    this.http.get<{devices: Device[]}>('/api/devices').subscribe({
+      next: (response) => {
+        this.availableDevices = response.devices;
+        this.messageService.addMessage(`Found ${this.availableDevices.length} devices`, 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to load devices: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  onSubmitDevices() {
+    if (this.deviceForm.valid) {
+      const deviceData = this.deviceForm.value;
+      this.messageService.addMessage('Device configuration saved', 'success');
+      console.log('Device settings:', deviceData);
+    }
   }
 
   onSubmitLocation() {

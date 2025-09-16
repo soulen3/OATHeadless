@@ -62,14 +62,64 @@
         <mat-card>
           <mat-card-header>
             <mat-card-title>Device Configuration</mat-card-title>
+            <mat-card-subtitle>Select USB and serial devices for telescope components</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <h3>Telescope</h3>
-            <p>Baudrate: <br>Serial Port:</p>
-            <h3>Guider</h3>
-            <p>USB port:</p>
-            <h3>Camera</h3>
-            <p>USB port:</p>
+            <button mat-raised-button color="primary" (click)="loadAvailableDevices()">
+              <mat-icon>refresh</mat-icon>
+              Refresh Devices
+            </button>
+
+            <form [formGroup]="deviceForm" (ngSubmit)="onSubmitDevices()" class="device-form">
+              <h3>Telescope Mount</h3>
+              <mat-form-field>
+                <mat-label>Serial Device</mat-label>
+                <mat-select formControlName="telescopeDevice">
+                  <mat-option value="">None</mat-option>
+                  <mat-option *ngFor="let device of availableDevices" [value]="device.device">
+                    {{device.device}} - {{device.description}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Baudrate</mat-label>
+                <mat-select formControlName="telescopeBaudrate">
+                  <mat-option [value]="9600">9600</mat-option>
+                  <mat-option [value]="19200">19200</mat-option>
+                  <mat-option [value]="38400">38400</mat-option>
+                  <mat-option [value]="57600">57600</mat-option>
+                  <mat-option [value]="115200">115200</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <h3>Guider</h3>
+              <mat-form-field>
+                <mat-label>USB Device</mat-label>
+                <mat-select formControlName="guiderDevice">
+                  <mat-option value="">None</mat-option>
+                  <mat-option *ngFor="let device of availableDevices" [value]="device.device">
+                    {{device.device}} - {{device.description}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <h3>Camera</h3>
+              <mat-form-field>
+                <mat-label>USB Device</mat-label>
+                <mat-select formControlName="cameraDevice">
+                  <mat-option value="">None</mat-option>
+                  <mat-option *ngFor="let device of availableDevices" [value]="device.device">
+                    {{device.device}} - {{device.description}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-raised-button color="accent" type="submit">
+                <mat-icon>save</mat-icon>
+                Save Device Configuration
+              </button>
+            </form>
           </mat-card-content>
         </mat-card>
       </div>
