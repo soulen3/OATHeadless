@@ -20,7 +20,7 @@ mount_bp = Blueprint("mount", __name__, url_prefix="/mount")
 def status():
     """Get comprehensive mount status using multiple Meade commands."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -64,7 +64,7 @@ def status():
 def position():
     """Get current mount RA/DEC coordinates."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -83,7 +83,7 @@ def position():
 def tracking():
     """Get current tracking rate."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -99,7 +99,7 @@ def tracking():
 def get_target():
     """Get current target coordinates."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -125,7 +125,7 @@ def set_target():
         return jsonify({"error": "RA and DEC required"}), 400
 
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -174,7 +174,7 @@ def indi_status():
 def home_mount():
     """Move to Home. No response expected."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -193,7 +193,7 @@ def home_mount():
 def home_ra():
     """Home RA axis using Hall sensor. No response expected."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -208,7 +208,7 @@ def home_ra():
 def home_dec():
     """Home DEC axis using Hall sensor. No response expected."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -230,7 +230,7 @@ def set_location():
         return jsonify({"error": "latitude and longitude required"}), 400
 
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -254,7 +254,7 @@ def set_location():
 def firmware():
     """Get mount firmware version."""
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503
@@ -277,7 +277,7 @@ def set_datetime():
         return jsonify({"error": "date and time required"}), 400
 
     mount = MountSerial()
-    mount.connection()
+    mount.connect()
 
     if not mount.is_connected:
         return jsonify({"error": "Mount not connected"}), 503

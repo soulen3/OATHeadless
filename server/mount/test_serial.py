@@ -17,14 +17,14 @@ class TestMountSerial(unittest.TestCase):
     def test_connection_success(self, mock_serial):
         """Test successful connection."""
         mock_serial.return_value = Mock()
-        self.mount.connection()
+        self.mount.connect()
         self.assertTrue(self.mount.is_connected)
 
     @patch("mount.serial.serial.Serial")
     def test_connection_failure(self, mock_serial):
         """Test connection failure."""
         mock_serial.side_effect = Exception("Connection failed")
-        self.mount.connection()
+        self.mount.connect()
         self.assertFalse(self.mount.is_connected)
 
     def test_write_not_connected(self):
@@ -37,7 +37,7 @@ class TestMountSerial(unittest.TestCase):
         """Test successful write."""
         mock_conn = Mock()
         mock_serial.return_value = mock_conn
-        self.mount.connection()
+        self.mount.connect()
 
         result = self.mount.write(":GR#")
         self.assertTrue(result)
@@ -54,7 +54,7 @@ class TestMountSerial(unittest.TestCase):
         mock_conn = Mock()
         mock_conn.readline.return_value = b"12:34:56\n"
         mock_serial.return_value = mock_conn
-        self.mount.connection()
+        self.mount.connect()
 
         result = self.mount.read_data()
         self.assertEqual(result, "12:34:56")

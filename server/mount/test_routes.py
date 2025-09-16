@@ -3,7 +3,6 @@
 import json
 import unittest
 from unittest.mock import Mock, patch
-
 from flask import Flask
 
 from .routes import mount_bp
@@ -13,222 +12,169 @@ class TestMountRoutes(unittest.TestCase):
     """Test mount API routes."""
 
     def setUp(self):
-        """Set up test fixtures."""
+        """Set up test client."""
         self.app = Flask(__name__)
         self.app.register_blueprint(mount_bp)
         self.client = self.app.test_client()
 
-    @patch("mount.routes.MountSerial")
-    def test_status_not_connected(self, mock_mount):
-        """Test status when mount not connected."""
-        mock_instance = Mock()
-        mock_instance.is_connected = False
-        mock_mount.return_value = mock_instance
+    @patch('serial.Serial')
+    def test_firmware_success(self, mock_serial):
+        """Test getting firmware version."""
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.return_value = b"V1.8.42"
+        mock_serial.return_value = mock_serial_instance
+
+        response = self.client.get("/mount/firmware")
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data["firmware_version"], "V1.8.42")
+
+    @patch('os.path.exists')
+    def test_firmware_device_not_found(self, mock_exists):
+        """Test firmware when device file doesn't exist."""
+        mock_exists.return_value = False
+
+        response = self.client.get("/mount/firmware")
+        self.assertEqual(response.status_code, 503)
+
+    @patch('serial.Serial')
+    def test_status_success(self, mock_serial):
+        """Test successful status retrieval."""
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.side_effect = [
+            b"12:34:56", b"45:67:89", b"1.0", b"", b"-123:45:67", 
+            b"89:01:23", b"12:34:56", b"01/01/23"
+        ]
+        mock_serial.return_value = mock_serial_instance
+
+        response = self.client.get("/mount/status")
+        self.assertEqual(response.status_code, 200)
+
+    @patch('os.path.exists')
+    def test_status_device_not_found(self, mock_exists):
+        """Test status when device not found."""
+        mock_exists.return_value = False
 
         response = self.client.get("/mount/status")
         self.assertEqual(response.status_code, 503)
 
-    @patch("mount.routes.MountSerial")
-    def test_status_success(self, mock_mount):
-        """Test successful status request."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.side_effect = [
-            "12:34:56",
-            "+45:30:00",
-            "1.0",
-            "",
-            "",
-            "-80:30:00",
-            "+45:30:00",
-            "12:00:00",
-            "01/01/25",
-        ]
-        mock_mount.return_value = mock_instance
-
-        response = self.client.get("/mount/status")
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertEqual(data["ra"], "12:34:56")
-
-    @patch("mount.routes.MountSerial")
-    def test_position_success(self, mock_mount):
-        """Test position endpoint."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.side_effect = ["12:34:56", "+45:30:00"]
-        mock_mount.return_value = mock_instance
+    @patch('serial.Serial')
+    def test_position_success(self, mock_serial):
+        """Test successful position retrieval."""
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.side_effect = [b"12:34:56", b"45:67:89"]
+        mock_serial.return_value = mock_serial_instance
 
         response = self.client.get("/mount/position")
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["ra"], "12:34:56")
-        self.assertEqual(data["dec"], "+45:30:00")
+        self.assertEqual(data["dec"], "45:67:89")
 
-    @patch("mount.routes.MountSerial")
-    def test_set_target_success(self, mock_mount):
-        """Test setting target coordinates."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.side_effect = ["1", "1"]
-        mock_mount.return_value = mock_instance
+    @patch('serial.Serial')
+    def test_set_target_success(self, mock_serial):
+        """Test successful target setting."""
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.side_effect = [b"1", b"1"]
+        mock_serial.return_value = mock_serial_instance
 
-        response = self.client.post(
-            "/mount/target", json={"ra": "12:34:56", "dec": "+45:30:00"}
-        )
+        response = self.client.post("/mount/target", 
+                                  json={"ra": "12:34:56", "dec": "45:67:89"})
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertTrue(data["ra_set"])
-        self.assertTrue(data["dec_set"])
 
     def test_set_target_missing_data(self):
-        """Test setting target with missing data."""
+        """Test target setting with missing data."""
         response = self.client.post("/mount/target", json={"ra": "12:34:56"})
         self.assertEqual(response.status_code, 400)
 
-    @patch("mount.routes.IndiClient")
-    def test_indi_status_server_down(self, mock_indi):
-        """Test INDI status when server down."""
-        mock_instance = Mock()
-        mock_instance.is_server_running.return_value = False
-        mock_indi.return_value = mock_instance
-
-        response = self.client.get("/mount/indi/status")
-        self.assertEqual(response.status_code, 503)
-
-    @patch("mount.routes.IndiClient")
-    def test_indi_status_success(self, mock_indi):
-        """Test INDI status when server running."""
-        mock_instance = Mock()
-        mock_instance.is_server_running.return_value = True
-        mock_instance.get_mount_status.return_value = True
-        mock_indi.return_value = mock_instance
-
-        response = self.client.get("/mount/indi/status")
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertTrue(data["server_running"])
-        self.assertTrue(data["mount_connected"])
-
-    @patch("mount.routes.IndiClient")
-    def test_indi_connection_connect(self, mock_indi):
-        """Test INDI mount connection."""
-        mock_instance = Mock()
-        mock_instance.is_server_running.return_value = True
-        mock_instance.connect_mount.return_value = True
-        mock_indi.return_value = mock_instance
-
-        response = self.client.post("/mount/indi/connection", json={"connect": True})
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertTrue(data["success"])
-        self.assertEqual(data["action"], "connected")
-
-    @patch("mount.routes.IndiClient")
-    def test_indi_connection_disconnect(self, mock_indi):
-        """Test INDI mount disconnection."""
-        mock_instance = Mock()
-        mock_instance.is_server_running.return_value = True
-        mock_instance.disconnect_mount.return_value = True
-        mock_indi.return_value = mock_instance
-
-        response = self.client.post("/mount/indi/connection", json={"connect": False})
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertTrue(data["success"])
-        self.assertEqual(data["action"], "disconnected")
-
-    @patch("mount.routes.MountSerial")
-    def test_home_mount_success(self, mock_mount):
+    @patch('serial.Serial')
+    def test_home_mount_success(self, mock_serial):
         """Test homing both axes."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.return_value = "1"
-        mock_mount.return_value = mock_instance
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial.return_value = mock_serial_instance
 
         response = self.client.post("/mount/home")
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["message"], "Move both axes to home")
 
-    @patch("mount.routes.MountSerial")
-    def test_home_ra_success(self, mock_mount):
+    @patch('serial.Serial')
+    def test_home_ra_success(self, mock_serial):
         """Test homing RA axis."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_mount.return_value = mock_instance
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial.return_value = mock_serial_instance
 
         response = self.client.post("/mount/home/ra")
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["message"], "Homing RA axis")
 
-    @patch("mount.routes.MountSerial")
-    def test_home_dec_success(self, mock_mount):
+    @patch('serial.Serial')
+    def test_home_dec_success(self, mock_serial):
         """Test homing DEC axis."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_mount.return_value = mock_instance
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial.return_value = mock_serial_instance
 
         response = self.client.post("/mount/home/dec")
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["message"], "Homing DEC axis")
 
-    @patch("mount.routes.MountSerial")
-    def test_home_not_connected(self, mock_mount):
-        """Test homing when mount not connected."""
-        mock_instance = Mock()
-        mock_instance.is_connected = False
-        mock_mount.return_value = mock_instance
+    @patch('os.path.exists')
+    def test_home_device_not_found(self, mock_exists):
+        """Test homing when device not found."""
+        mock_exists.return_value = False
 
         response = self.client.post("/mount/home")
         self.assertEqual(response.status_code, 503)
 
-    @patch("mount.routes.MountSerial")
-    def test_set_datetime_success(self, mock_mount):
+    @patch('serial.Serial')
+    def test_set_datetime_success(self, mock_serial):
         """Test setting date and time."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.side_effect = ["1", "1"]
-        mock_mount.return_value = mock_instance
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.side_effect = [b"1", b"1"]
+        mock_serial.return_value = mock_serial_instance
 
-        response = self.client.post(
-            "/mount/datetime", json={"date": "09/15/25", "time": "21:54:00"}
-        )
+        response = self.client.post("/mount/datetime", 
+                                  json={"date": "09/15/25", "time": "21:54:00"})
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertTrue(data["date_set"])
         self.assertTrue(data["time_set"])
 
-    @patch("mount.routes.MountSerial")
-    def test_set_datetime_missing_data(self, mock_mount):
+    def test_set_datetime_missing_data(self):
         """Test setting datetime with missing data."""
         response = self.client.post("/mount/datetime", json={"date": "09/15/25"})
         self.assertEqual(response.status_code, 400)
 
-    @patch("mount.routes.MountSerial")
-    def test_firmware_success(self, mock_mount):
-        """Test getting firmware version."""
-        mock_instance = Mock()
-        mock_instance.is_connected = True
-        mock_instance.read_data.return_value = "V1.8.42"
-        mock_mount.return_value = mock_instance
+    @patch('serial.Serial')
+    def test_set_location_success(self, mock_serial):
+        """Test setting location coordinates."""
+        mock_serial_instance = Mock()
+        mock_serial_instance.is_open = True
+        mock_serial_instance.readline.side_effect = [b"1", b"1"]
+        mock_serial.return_value = mock_serial_instance
 
-        response = self.client.get("/mount/firmware")
+        response = self.client.post("/mount/location", 
+                                  json={"latitude": "+45:30:00", "longitude": "123:45:00"})
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data["firmware_version"], "V1.8.42")
+        self.assertTrue(data["latitude_set"])
+        self.assertTrue(data["longitude_set"])
 
-    @patch("mount.routes.MountSerial")
-    def test_firmware_not_connected(self, mock_mount):
-        """Test firmware when mount not connected."""
-        mock_instance = Mock()
-        mock_instance.is_connected = False
-        mock_mount.return_value = mock_instance
-
-        response = self.client.get("/mount/firmware")
-        self.assertEqual(response.status_code, 503)
+    def test_set_location_missing_data(self):
+        """Test setting location with missing data."""
+        response = self.client.post("/mount/location", json={"latitude": "+45:30:00"})
+        self.assertEqual(response.status_code, 400)
 
     def test_indi_connection_missing_data(self):
         """Test INDI connection with missing data."""

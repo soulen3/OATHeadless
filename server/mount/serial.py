@@ -1,9 +1,11 @@
 """Serial communication interface for OAT mount using Meade commands."""
 
 import logging
+import os
 import sys
 
 import serial
+import serial.tools.list_ports
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +23,18 @@ class MountSerial:
         self.serial = None
         self.is_connected = False
 
-    def connection(self):
+    def connect(self):
         """Establish serial connection to mount."""
+        if self.is_connected or self.serial:
+            logger.info("Already connected to mount at %s", self.device)
+            return
+
         try:
             self.serial = serial.Serial(
                 self.device, baudrate=self.baudrate, timeout=self.timeout
             )
             self.is_connected = True
+            logger.info("Connected to mount at %s", self.device)
         except Exception as e:
             self.is_connected = False
             logger.error("Error connecting to %s: %s", self.device, e)
