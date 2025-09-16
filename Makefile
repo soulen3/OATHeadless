@@ -65,7 +65,7 @@ endif
 
 .PHONY: dev-server
 dev-server: install-server
-	cd $(SERVER_DIR) && $(PYTHON) app.py
+	cd $(SERVER_DIR) &&  ./venv/bin/flask run
 
 # Build production bundle
 .PHONY: build
@@ -125,7 +125,7 @@ check:
 	@echo -n "npm: "; npm --version 2>/dev/null || echo "Not found"
 	@echo -n "yarn: "; yarn --version 2>/dev/null || echo "Not found"
 	@echo -n "pnpm: "; pnpm --version 2>/dev/null || echo "Not found"
-	@echo -n "Angular CLI: "; ng version --version 2>/dev/null || echo "Not found"
+	@echo -n "Angular CLI: "; ng version |awk -F: '/Angular CLI/ {print $$2}' 2>/dev/null || echo "Not found"
 	@echo -n "Virtual env: "; test -d $(VENV_DIR) && echo "Created" || echo "Not created"
 
 # Clean
