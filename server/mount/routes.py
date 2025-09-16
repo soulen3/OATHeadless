@@ -219,6 +219,55 @@ def home_dec():
     return jsonify({"success": True, "message": "Homing DEC axis"})
 
 
+@mount_bp.route("/firmware")
+def firmware():
+    """Get mount firmware version."""
+    mount = MountSerial()
+    mount.connection()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":GVN#")
+    version = mount.read_data()
+
+    mount.disconnect()
+    return jsonify({"firmware_version": version})
+
+
+@mount_bp.route("/datetime", methods=["POST"])
+def set_datetime():
+    """Set mount date and time.
+
+    Expects JSON: {"date": "MM/DD/YY", "time": "HH:MM:SS"}
+    """
+    data = request.get_json()
+    if not data or "date" not in data or "time" not in data:
+        return jsonify({"error": "date and time required"}), 400
+
+    mount = MountSerial()
+    mount.connection()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(f":SC{data['date']}#")  # Set date
+    date_response = mount.read_data()
+
+    mount.write(f":SL{data['time']}#")  # Set local time
+    time_response = mount.read_data()
+
+    mount.disconnect()
+    return jsonify(
+        {
+            "date_set": date_response == "1",
+            "time_set": time_response == "1",
+            "date": data["date"],
+            "time": data["time"],
+        }
+    )
+
+
 @mount_bp.route("/indi/connection", methods=["POST"])
 def indi_connection():
     """Connect or disconnect mount from INDI service."""

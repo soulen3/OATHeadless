@@ -185,6 +185,51 @@ class TestMountRoutes(unittest.TestCase):
         response = self.client.post("/mount/home")
         self.assertEqual(response.status_code, 503)
 
+    @patch("mount.routes.MountSerial")
+    def test_set_datetime_success(self, mock_mount):
+        """Test setting date and time."""
+        mock_instance = Mock()
+        mock_instance.is_connected = True
+        mock_instance.read_data.side_effect = ["1", "1"]
+        mock_mount.return_value = mock_instance
+
+        response = self.client.post(
+            "/mount/datetime", json={"date": "09/15/25", "time": "21:54:00"}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data["date_set"])
+        self.assertTrue(data["time_set"])
+
+    @patch("mount.routes.MountSerial")
+    def test_set_datetime_missing_data(self, mock_mount):
+        """Test setting datetime with missing data."""
+        response = self.client.post("/mount/datetime", json={"date": "09/15/25"})
+        self.assertEqual(response.status_code, 400)
+
+    @patch("mount.routes.MountSerial")
+    def test_firmware_success(self, mock_mount):
+        """Test getting firmware version."""
+        mock_instance = Mock()
+        mock_instance.is_connected = True
+        mock_instance.read_data.return_value = "V1.8.42"
+        mock_mount.return_value = mock_instance
+
+        response = self.client.get("/mount/firmware")
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data["firmware_version"], "V1.8.42")
+
+    @patch("mount.routes.MountSerial")
+    def test_firmware_not_connected(self, mock_mount):
+        """Test firmware when mount not connected."""
+        mock_instance = Mock()
+        mock_instance.is_connected = False
+        mock_mount.return_value = mock_instance
+
+        response = self.client.get("/mount/firmware")
+        self.assertEqual(response.status_code, 503)
+
     def test_indi_connection_missing_data(self):
         """Test INDI connection with missing data."""
         response = self.client.post("/mount/indi/connection", json={})
