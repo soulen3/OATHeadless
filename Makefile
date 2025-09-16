@@ -4,10 +4,24 @@
 CLIENT_DIR = client
 SERVER_DIR = server
 DIST_DIR = dist
+VENV_DIR = $(SERVER_DIR)/venv
+PYTHON = ./venv/bin/python
+PIP = $(VENV_DIR)/bin/pip
+
+# Check for package managers
+NPM := $(shell command -v npm 2> /dev/null)
+YARN := $(shell command -v yarn 2> /dev/null)
+PNPM := $(shell command -v pnpm 2> /dev/null)
 
 # Default target
 .PHONY: all
 all: build
+
+# Create virtual environment
+.PHONY: venv
+venv:
+	cd $(SERVER_DIR) && python3 -m venv venv
+	$(PIP) install --upgrade pip
 
 # Install all dependencies
 .PHONY: install
@@ -15,11 +29,20 @@ install: install-client install-server
 
 .PHONY: install-client
 install-client:
+ifdef NPM
 	cd $(CLIENT_DIR) && npm install
+else ifdef YARN
+	cd $(CLIENT_DIR) && yarn install
+else ifdef PNPM
+	cd $(CLIENT_DIR) && pnpm install
+else
+	@echo "Error: No package manager found (npm, yarn, or pnpm required)"
+	@exit 1
+endif
 
 .PHONY: install-server
-install-server:
-	cd $(SERVER_DIR) && pip install -r requirements.txt
+install-server: venv
+	$(PIP) install -r $(SERVER_DIR)/requirements.txt
 
 # Development servers
 .PHONY: dev
@@ -29,11 +52,20 @@ dev:
 
 .PHONY: dev-client
 dev-client: install-client
+ifdef NPM
 	cd $(CLIENT_DIR) && npm start
+else ifdef YARN
+	cd $(CLIENT_DIR) && yarn start
+else ifdef PNPM
+	cd $(CLIENT_DIR) && pnpm start
+else
+	@echo "Error: No package manager found"
+	@exit 1
+endif
 
 .PHONY: dev-server
 dev-server: install-server
-	cd $(SERVER_DIR) && python app.py
+	cd $(SERVER_DIR) && $(PYTHON) app.py
 
 # Build production bundle
 .PHONY: build
@@ -41,7 +73,21 @@ build: build-client
 
 .PHONY: build-client
 build-client: install-client
+ifdef NPM
 	cd $(CLIENT_DIR) && npm run build --configuration=production
+else ifdef YARN
+	cd $(CLIENT_DIR) && yarn build --configuration=production
+else ifdef PNPM
+	cd $(CLIENT_DIR) && pnpm build --configuration=production
+else
+	@echo "Error: No package manager found"
+	@exit 1
+endif
+
+# Manual build (if Angular CLI is available globally)
+.PHONY: build-manual
+build-manual:
+	cd $(CLIENT_DIR) && ng build --configuration=production
 
 # Package application
 .PHONY: package
@@ -53,26 +99,34 @@ package: build-client
 	cd $(DIST_DIR) && tar -czf oatheadless-bundle.tar.gz client/ server/
 	@echo "Bundle created: $(DIST_DIR)/oatheadless-bundle.tar.gz"
 
+# Package server only
+.PHONY: package-server
+package-server: install-server
+	@echo "Creating server-only bundle..."
+	mkdir -p $(DIST_DIR)
+	cp -r $(SERVER_DIR) $(DIST_DIR)/server
+	cd $(DIST_DIR) && tar -czf oatheadless-server.tar.gz server/
+	@echo "Server bundle created: $(DIST_DIR)/oatheadless-server.tar.gz"
+
 # Testing
 .PHONY: test
-test: test-client test-server
-
-.PHONY: test-client
-test-client: install-client
-	cd $(CLIENT_DIR) && npm test
+test: test-server
 
 .PHONY: test-server
 test-server: install-server
-	cd $(SERVER_DIR) && python -m pytest mount/test_*.py -v
+	cd $(SERVER_DIR) && $(PYTHON) -m pytest mount/test_*.py -v
 
-# Code quality
-.PHONY: lint
-lint: install-client
-	cd $(CLIENT_DIR) && npm run lint
-
-.PHONY: format
-format: install-client
-	cd $(CLIENT_DIR) && npm run format
+# Check system
+.PHONY: check
+check:
+	@echo "Checking system requirements..."
+	@echo -n "Python: "; python3 --version 2>/dev/null || echo "Not found"
+	@echo -n "Node.js: "; node --version 2>/dev/null || echo "Not found"
+	@echo -n "npm: "; npm --version 2>/dev/null || echo "Not found"
+	@echo -n "yarn: "; yarn --version 2>/dev/null || echo "Not found"
+	@echo -n "pnpm: "; pnpm --version 2>/dev/null || echo "Not found"
+	@echo -n "Angular CLI: "; ng version --version 2>/dev/null || echo "Not found"
+	@echo -n "Virtual env: "; test -d $(VENV_DIR) && echo "Created" || echo "Not created"
 
 # Clean
 .PHONY: clean
@@ -84,21 +138,24 @@ clean:
 .PHONY: clean-all
 clean-all: clean
 	rm -rf $(CLIENT_DIR)/node_modules
+	rm -rf $(VENV_DIR)
 
 # Help
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  install      - Install all dependencies"
-	@echo "  dev-client   - Start Angular development server"
-	@echo "  dev-server   - Start Flask development server"
-	@echo "  build        - Build client application"
-	@echo "  package      - Create complete application bundle"
-	@echo "  test         - Run all tests"
-	@echo "  test-client  - Run client tests"
-	@echo "  test-server  - Run server tests"
-	@echo "  lint         - Run client linter"
-	@echo "  format       - Format client code"
-	@echo "  clean        - Clean build artifacts"
-	@echo "  clean-all    - Clean everything including dependencies"
-	@echo "  help         - Show this help"
+	@echo "  venv           - Create Python virtual environment"
+	@echo "  install        - Install all dependencies"
+	@echo "  dev-client     - Start Angular development server"
+	@echo "  dev-server     - Start Flask development server"
+	@echo "  build          - Build client application"
+	@echo "  build-manual   - Build using global Angular CLI"
+	@echo "  package        - Create complete application bundle"
+	@echo "  package-server - Create server-only bundle"
+	@echo "  test-server    - Run server tests"
+	@echo "  check          - Check system requirements"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  clean-all      - Clean everything including venv"
+	@echo "  help           - Show this help"
+	@echo ""
+	@echo "Virtual environment will be created at: $(VENV_DIR)"
