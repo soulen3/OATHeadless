@@ -3,7 +3,9 @@
 import logging
 import time
 from datetime import datetime
+
 from flask import Flask, abort, jsonify, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .camera.routes import camera_bp
 from .guider.routes import guider_bp
@@ -11,12 +13,15 @@ from .mount.routes import mount_bp
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+# COnfigure App
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Add Blueprints
 app.register_blueprint(camera_bp)
 app.register_blueprint(mount_bp)
 app.register_blueprint(guider_bp)

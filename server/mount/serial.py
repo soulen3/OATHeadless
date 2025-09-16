@@ -1,15 +1,18 @@
 """Serial communication interface for OAT mount using Meade commands."""
 
 import logging
-import serial
 import sys
+
+import serial
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_DEVICE = "/dev/serial/by-id/usb-Raspberry_Pi_Pico_E662608797224B29-if00"
 
+
 class MountSerial:
     """Handles serial communication with OAT mount."""
+
     def __init__(self, device=DEFAULT_DEVICE, baudrate=9600, timeout=0.01):
         """Initialize serial connection parameters."""
         self.device = device
@@ -40,7 +43,7 @@ class MountSerial:
         if not self.is_connected:
             logger.warning("Not connected to serial port")
             return False
-        
+
         try:
             self.serial.write(bytes(command, "utf-8"))
             return True

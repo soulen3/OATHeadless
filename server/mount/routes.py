@@ -8,8 +8,9 @@ Serial commands for OpenAstroTech can be found here:
 """
 
 from flask import Blueprint, abort, jsonify, request
-from .serial import MountSerial
+
 from .indi_client import IndiClient
+from .serial import MountSerial
 
 mount_bp = Blueprint("mount", __name__, url_prefix="/mount")
 

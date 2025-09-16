@@ -29,11 +29,14 @@ class IndiClient:
         """Connect mount driver to INDI server."""
         if not self.is_server_running():
             return False
-        
+
         try:
             # Start driver if not already running
-            subprocess.run(["indi_setprop", f"{driver}.CONNECTION.CONNECT=On"], 
-                         check=True, capture_output=True)
+            subprocess.run(
+                ["indi_setprop", f"{driver}.CONNECTION.CONNECT=On"],
+                check=True,
+                capture_output=True,
+            )
             time.sleep(2)  # Allow connection time
             self.connected = True
             return True
@@ -44,10 +47,13 @@ class IndiClient:
         """Disconnect mount driver from INDI server."""
         if not self.is_server_running():
             return False
-        
+
         try:
-            subprocess.run(["indi_setprop", f"{driver}.CONNECTION.CONNECT=Off"], 
-                         check=True, capture_output=True)
+            subprocess.run(
+                ["indi_setprop", f"{driver}.CONNECTION.CONNECT=Off"],
+                check=True,
+                capture_output=True,
+            )
             self.connected = False
             return True
         except subprocess.CalledProcessError:
@@ -57,10 +63,14 @@ class IndiClient:
         """Get mount connection status from INDI."""
         if not self.is_server_running():
             return None
-        
+
         try:
-            result = subprocess.run(["indi_getprop", f"{driver}.CONNECTION"], 
-                                  capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["indi_getprop", f"{driver}.CONNECTION"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return "CONNECT=On" in result.stdout
         except subprocess.CalledProcessError:
             return None
