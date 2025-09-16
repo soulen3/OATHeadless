@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime
 
-from flask import Flask, abort, jsonify, request, render_template
+from flask import Flask, abort, jsonify, render_template, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .camera.routes import camera_bp
@@ -17,15 +17,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# COnfigure App
-app = Flask(__name__)
+# Configure App
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Add Blueprints
 app.register_blueprint(camera_bp)
 app.register_blueprint(mount_bp)
 app.register_blueprint(guider_bp)
-
 
 # Error Handling
 @app.errorhandler(404)
@@ -47,6 +50,13 @@ def not_implemented(e):  # pylint: disable=unused-argument
     """501 Error."""
     logger.warning("501 Not Implemented: %s", request.url)
     return jsonify({"message": "Request has not been implemented."}), 501
+
+
+@app.route("/")
+@app.route("/<path:path>")
+def client_app(path=None):
+    """Serve the Angular client application."""
+    return render_template("index.html")
 
 
 @app.route("/devices")
@@ -71,13 +81,6 @@ def list_devices():
         )
 
     return jsonify({"devices": devices})
-
-
-@app.route("/")
-@app.route("/<path:path>")
-def client_app(path=None):
-    """Serve the Angular client application."""
-    return render_template("client.html")
 
 
 @app.route("/get_time")

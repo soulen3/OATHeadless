@@ -84,21 +84,12 @@ else
 	@exit 1
 endif
 
-# Build single bundle file
-.PHONY: build-single
-build-single: build-client
-	@echo "Creating single bundle file..."
-	cd $(CLIENT_DIR)/dist/oatheadless/browser && \
-	cat polyfills-*.js chunk-*.js main-*.js > app-bundle.js && \
-	echo "Single bundle created: $(CLIENT_DIR)/dist/oatheadless/browser/app-bundle.js"
-
 # Deploy client files to Flask static directory
 .PHONY: deploy-client
-deploy-client: build-single
+deploy-client: build-client
 	@echo "Deploying client files to Flask static directory..."
-	cp $(CLIENT_DIR)/dist/oatheadless/browser/app-bundle.js $(SERVER_DIR)/static/
-	cp $(CLIENT_DIR)/dist/oatheadless/browser/styles-*.css $(SERVER_DIR)/static/styles.css
-	cp $(CLIENT_DIR)/dist/oatheadless/browser/favicon.ico $(SERVER_DIR)/static/
+	mkdir -p $(SERVER_DIR)/static/
+	cp $(CLIENT_DIR)/dist/static/* $(SERVER_DIR)/static/
 	@echo "Client files deployed to $(SERVER_DIR)/static/"
 
 # Manual build (if Angular CLI is available globally)
@@ -150,6 +141,7 @@ clean:
 	rm -rf $(DIST_DIR)
 	rm -rf $(CLIENT_DIR)/dist
 	rm -rf $(CLIENT_DIR)/.angular
+	rm -rf $(SERVER_DIR)/static
 
 .PHONY: clean-all
 clean-all: clean
@@ -165,7 +157,6 @@ help:
 	@echo "  dev-client     - Start Angular development server"
 	@echo "  dev-server     - Start Flask development server"
 	@echo "  build          - Build client application"
-	@echo "  build-single   - Build client and create single bundle file"
 	@echo "  deploy-client  - Deploy client files to Flask static directory"
 	@echo "  build-manual   - Build using global Angular CLI"
 	@echo "  package        - Create complete application bundle"
