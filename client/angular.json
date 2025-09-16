@@ -17,20 +17,20 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-              "outputPath": "dist/static",
-              "main": "src/main.ts",
-              "tsConfig": "tsconfig.app.json",
-              "index": "src/index.html",
-              "optimization": true,      
-              "buildOptimizer": true,
-              "aot": true, 
-              "vendorChunk": true,
-              "commonChunk": true,
-              "namedChunks": false,  
-              "extractLicenses": true,
-              "crossOrigin": "none",
-              "deployUrl": "/static/",
-              "baseHref": "/"
+            "outputPath": "dist/oatheadless",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "sass",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": ["src/styles/styles.sass"],
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -39,6 +39,12 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false
+            },
+            "development": {
+              "deployUrl": "/",
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           }
         },

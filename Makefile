@@ -74,7 +74,7 @@ build: build-client
 .PHONY: build-client
 build-client: install-client
 ifdef NPM
-	cd $(CLIENT_DIR) && npm run build --configuration=production
+	cd $(CLIENT_DIR) && ng build --configuration=production
 else ifdef YARN
 	cd $(CLIENT_DIR) && yarn build --configuration=production
 else ifdef PNPM
@@ -89,7 +89,7 @@ endif
 deploy-client: build-client
 	@echo "Deploying client files to Flask static directory..."
 	mkdir -p $(SERVER_DIR)/static/
-	cp $(CLIENT_DIR)/dist/static/* $(SERVER_DIR)/static/
+	cp $(CLIENT_DIR)/dist/oatheadless/* $(SERVER_DIR)/static/
 	@echo "Client files deployed to $(SERVER_DIR)/static/"
 
 # Manual build (if Angular CLI is available globally)
@@ -102,7 +102,7 @@ build-manual:
 package: deploy-client
 	@echo "Creating application bundle..."
 	mkdir -p $(DIST_DIR)
-	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz server/
+	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz --exclude='./venv' server/
 	@echo "Bundle created: $(DIST_DIR)/oatheadless-bundle.tar.gz"
 	@echo "Contains: Flask server + static client files"
 

@@ -72,7 +72,7 @@ export class SettingsComponent implements OnInit {
   loadAvailableDevices() {
     this.messageService.addMessage('Loading available devices...', 'info');
     
-    this.http.get<{devices: Device[]}>('/api/devices').subscribe({
+    this.http.get<{devices: Device[]}>('/devices').subscribe({
       next: (response) => {
         this.availableDevices = response.devices;
         this.messageService.addMessage(`Found ${this.availableDevices.length} devices`, 'success');

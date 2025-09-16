@@ -22,7 +22,7 @@ export class ThemeService {
 
   setTheme(theme: Theme) {
     if (isPlatformBrowser(this.platformId)) {
-      document.body.classList.remove(this.currentTheme);
+      document.body.classList.remove('light-theme', 'dark-theme', 'low-light-theme');
       document.body.classList.add(theme);
       this.currentTheme = theme;
     }
