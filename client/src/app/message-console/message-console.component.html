@@ -1,0 +1,17 @@
+<div class="console-container">
+  <mat-card class="console-card">
+    <mat-card-header>
+      <mat-card-title>Messages</mat-card-title>
+      <button mat-icon-button (click)="clear()">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </mat-card-header>
+    <mat-card-content class="console-content">
+      <div *ngFor="let message of messages" class="message" [ngClass]="message.type">
+        <span class="timestamp">{{ message.timestamp | date:'HH:mm:ss' }}</span>
+        <span class="text">{{ message.text }}</span>
+      </div>
+      <div *ngIf="messages.length === 0" class="no-messages">No messages</div>
+    </mat-card-content>
+  </mat-card>
+</div>

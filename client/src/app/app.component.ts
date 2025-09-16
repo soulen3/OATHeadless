@@ -10,6 +10,7 @@ import { ThemeService } from './theme/theme.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { filter } from 'rxjs';
+import { MessageConsoleComponent } from './message-console/message-console.component';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +23,7 @@ import { filter } from 'rxjs';
     MatIconModule,
     MatButtonModule,
     MatListModule,
+    MessageConsoleComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.sass'],

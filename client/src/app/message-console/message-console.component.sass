@@ -1,0 +1,52 @@
+.console-container
+  position: fixed
+  bottom: 20px
+  left: 20px
+  right: 20px
+  z-index: 1000
+  max-width: calc(100vw - 40px)
+
+.console-card
+  max-height: 200px
+  background-color: #1e1e1e
+  color: #ffffff
+  margin: 0
+
+.console-content
+  max-height: 120px
+  overflow-y: auto
+  font-family: 'Courier New', monospace
+  font-size: 12px
+  padding: 8px
+
+.message
+  display: flex
+  margin-bottom: 4px
+  
+  &.success
+    color: #4caf50
+  
+  &.error
+    color: #f44336
+  
+  &.info
+    color: #ffffff
+
+.timestamp
+  margin-right: 8px
+  color: #888
+  min-width: 60px
+
+.no-messages
+  color: #888
+  font-style: italic
+
+mat-card-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 8px 16px
+
+mat-card-title
+  font-size: 14px
+  margin: 0

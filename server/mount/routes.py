@@ -219,6 +219,37 @@ def home_dec():
     return jsonify({"success": True, "message": "Homing DEC axis"})
 
 
+@mount_bp.route("/location", methods=["POST"])
+def set_location():
+    """Set mount location coordinates.
+    
+    Expects JSON: {"latitude": "sDD:MM:SS", "longitude": "DDD:MM:SS"}
+    """
+    data = request.get_json()
+    if not data or "latitude" not in data or "longitude" not in data:
+        return jsonify({"error": "latitude and longitude required"}), 400
+
+    mount = MountSerial()
+    mount.connection()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(f":St{data['latitude']}#")  # Set latitude
+    lat_response = mount.read_data()
+
+    mount.write(f":Sg{data['longitude']}#")  # Set longitude
+    lon_response = mount.read_data()
+
+    mount.disconnect()
+    return jsonify({
+        "latitude_set": lat_response == "1",
+        "longitude_set": lon_response == "1",
+        "latitude": data["latitude"],
+        "longitude": data["longitude"]
+    })
+
+
 @mount_bp.route("/firmware")
 def firmware():
     """Get mount firmware version."""

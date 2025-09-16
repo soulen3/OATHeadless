@@ -1,6 +1,6 @@
 <div class="app-container">
   <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav #drawer mode="side" class="sidenav" fixedInViewport>
+    <mat-sidenav #drawer mode="side" class="sidenav" fixedInViewport opened>
       <mat-nav-list>
         <a mat-list-item routerLink="/">Home</a>
         <a mat-list-item routerLink="/camera">Camera</a>
@@ -29,4 +29,6 @@
       </div>
     </mat-sidenav-content>
   </mat-sidenav-container>
+  
+  <app-message-console></app-message-console>
 </div>

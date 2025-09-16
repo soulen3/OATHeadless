@@ -1,76 +1,99 @@
-<div>
-  <ul>
-    <button (click)="goToPage('location')">Location & Time</button>
-    <button (click)="goToPage('deviceSetup')">Device Setup</button>
-    <button (click)="goToPage('autohoming')">Autohoming</button>
-  </ul>
-</div>
+<div class="settings-container">
+  <mat-tab-group>
+    <mat-tab label="Location & Time">
+      <div class="tab-content">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Location</mat-card-title>
+            <mat-card-subtitle>Set your telescope's location coordinates</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <button mat-raised-button color="primary" (click)="getUserLocation()">
+              <mat-icon>location_on</mat-icon>
+              Get Current Location
+            </button>
+            
+            <form [formGroup]="locationForm" (ngSubmit)="onSubmitLocation()" class="location-form">
+              <mat-form-field>
+                <mat-label>Latitude</mat-label>
+                <input matInput formControlName="latitude" type="number" step="any">
+                <mat-error *ngIf="locationForm.get('latitude')?.hasError('required')">
+                  Latitude is required
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field>
+                <mat-label>Longitude</mat-label>
+                <input matInput formControlName="longitude" type="number" step="any">
+                <mat-error *ngIf="locationForm.get('longitude')?.hasError('required')">
+                  Longitude is required
+                </mat-error>
+              </mat-form-field>
+              
+              <button mat-raised-button color="accent" type="submit" [disabled]="locationForm.invalid">
+                <mat-icon>save</mat-icon>
+                Set Location
+              </button>
+            </form>
+          </mat-card-content>
+        </mat-card>
 
-<div class="form-container" *ngIf="currentPage === 'location'">
-  <h2>Location</h2>
-  <p>Manually enter your location or get your location from your device.</p>
-  <button (click)="getUserLocation()">Get Location</button>
-  <div>
-    <form [formGroup]="locationForm" (ngSubmit)="onSubmitLocation()">
-      <label for="longitude">Longitude</label>
-      <input
-        id="longitude"
-        formControlName="longitude"
-        value="{{ longitude }}"
-      />
-      <div
-        *ngIf="
-          locationForm.controls['longitude'].invalid &&
-          locationForm.controls['longitude'].touched
-        "
-      >
-        <small *ngIf="locationForm.controls['longitude'].errors?.['required']"
-          >Longitude is required</small
-        >
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Date & Time</mat-card-title>
+            <mat-card-subtitle>Sync telescope time with your device</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <button mat-raised-button color="primary" (click)="setDeviceTime()">
+              <mat-icon>schedule</mat-icon>
+              Set Current Time
+            </button>
+            <p *ngIf="useTime" class="time-display">
+              <mat-icon>check_circle</mat-icon>
+              Time set: {{ useTime | date:'medium' }}
+            </p>
+          </mat-card-content>
+        </mat-card>
       </div>
-      <label for="latitude">Latitude</label>
-      <input id="latitude" formControlName="latitude" value="{{ latitude }}" />
-      <div
-        *ngIf="
-          locationForm.controls['latitude'].invalid &&
-          locationForm.controls['latitude'].touched
-        "
-      >
-        <small *ngIf="locationForm.controls['latitude'].errors?.['required']"
-          >Latitude is required</small
-        >
+    </mat-tab>
+
+    <mat-tab label="Device Setup">
+      <div class="tab-content">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Device Configuration</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <h3>Telescope</h3>
+            <p>Baudrate: <br>Serial Port:</p>
+            <h3>Guider</h3>
+            <p>USB port:</p>
+            <h3>Camera</h3>
+            <p>USB port:</p>
+          </mat-card-content>
+        </mat-card>
       </div>
-      <button type="submit" [disabled]="locationForm.invalid">Submit</button>
-    </form>
+    </mat-tab>
+
+    <mat-tab label="Autohoming">
+      <div class="tab-content">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Autohome Configuration</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>RA Start Direction: East/West</p>
+            <p>RA Search Distance: 15 degrees</p>
+            <p>Dec Start Direction: North/South</p>
+            <p>Dec Search Distance: 15 degrees</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon>error</mat-icon>
+    {{ errorMessage }}
   </div>
-  <h2>Time</h2>
-  <p>Use your devices time to set the time and date on your telescope.</p>
-  <button (click)="setDeviceTime()">Set Time</button>
-  <div *ngIf="useTime">
-    <p>Time was set to: {{ useTime }}</p>
-  </div>
-</div>
-
-<div class="form-container" *ngIf="currentPage === 'deviceSetup'">
-  <h2>Device Setup</h2>
-  <p>Select which ports to use for your telescope, guider, and camera.</p>
-  <h3>Telescope</h3>
-  Baudrate:<br />
-  Serial Port:
-  <h3>Guider</h3>
-  USB port:
-  <h3>Camera</h3>
-  USB port:
-</div>
-
-<div class="form-container" *ngIf="currentPage === 'autohoming'">
-  <h2>Autohome Configuration</h2>
-  RA Start Direction: East/West<br />
-  RA Search Distance: 15 degress<br />
-  Dec Start Direction: North/South<br />
-  Dec Search Distance: 15 degress<br />
-</div>
-
-<div *ngIf="errorMessage">
-  <p>Error: {{ errorMessage }}</p>
 </div>
