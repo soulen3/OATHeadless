@@ -67,12 +67,29 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit() {
     this.loadAvailableDevices();
+    this.loadDeviceConfiguration();
+  }
+
+  loadDeviceConfiguration() {
+    this.messageService.addMessage('Loading device configuration...', 'info');
+    
+    this.http.get<{config: any}>('/api/config/device').subscribe({
+      next: (response) => {
+        if (response.config) {
+          this.deviceForm.patchValue(response.config);
+          this.messageService.addMessage('Device configuration loaded', 'success');
+        }
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to load device config: ' + (error.error?.error || error.message), 'error');
+      }
+    });
   }
 
   loadAvailableDevices() {
     this.messageService.addMessage('Loading available devices...', 'info');
     
-    this.http.get<{devices: Device[]}>('/devices').subscribe({
+    this.http.get<{devices: Device[]}>('/api/devices').subscribe({
       next: (response) => {
         this.availableDevices = response.devices;
         this.messageService.addMessage(`Found ${this.availableDevices.length} devices`, 'success');
@@ -86,8 +103,18 @@ export class SettingsComponent implements OnInit {
   onSubmitDevices() {
     if (this.deviceForm.valid) {
       const deviceData = this.deviceForm.value;
-      this.messageService.addMessage('Device configuration saved', 'success');
-      console.log('Device settings:', deviceData);
+      this.messageService.addMessage('Saving device configuration...', 'info');
+      
+      this.http.post('/api/config/device', deviceData).subscribe({
+        next: (response: any) => {
+          this.messageService.addMessage('Device configuration saved successfully', 'success');
+        },
+        error: (error) => {
+          this.messageService.addMessage('Failed to save device config: ' + (error.error?.error || error.message), 'error');
+        }
+      });
+    } else {
+      this.messageService.addMessage('Please fill in all required fields', 'error');
     }
   }
 
@@ -163,15 +190,17 @@ export class SettingsComponent implements OnInit {
   }
 
   setDeviceTime() {
-    this.messageService.addMessage('Setting mount time...', 'info');
+    this.messageService.addMessage('Setting mount time to UTC...', 'info');
     
     const now = new Date();
-    const date = now.toLocaleDateString('en-US', {
+    const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+    
+    const date = utcNow.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
       year: '2-digit'
     });
-    const time = now.toLocaleTimeString('en-US', {
+    const time = utcNow.toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',

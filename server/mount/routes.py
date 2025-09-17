@@ -12,7 +12,7 @@ from flask import Blueprint, abort, jsonify, request
 from .indi_client import IndiClient
 from .serial import MountSerial
 
-mount_bp = Blueprint("mount", __name__, url_prefix="/mount")
+mount_bp = Blueprint("mount", __name__, url_prefix="/api/mount")
 
 
 @mount_bp.route("/")

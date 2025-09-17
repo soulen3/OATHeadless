@@ -59,7 +59,7 @@ def client_app(path=None):
     return render_template("index.html")
 
 
-@app.route("/devices")
+@app.route("/api/devices")
 def list_devices():
     """List available serial and USB devices."""
     import serial.tools.list_ports
@@ -83,13 +83,57 @@ def list_devices():
     return jsonify({"devices": devices})
 
 
-@app.route("/get_time")
+@app.route("/api/config/device", methods=["GET", "POST"])
+def device_config():
+    """Get or set device configuration."""
+    import json
+    import os
+    
+    config_file = "device_config.json"
+    
+    if request.method == "POST":
+        # Save device configuration
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No configuration data provided"}), 400
+            
+        try:
+            with open(config_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            logger.info("Device configuration saved: %s", data)
+            return jsonify({"message": "Device configuration saved", "config": data})
+        except Exception as e:
+            logger.error("Failed to save device config: %s", str(e))
+            return jsonify({"error": "Failed to save configuration"}), 500
+    
+    else:
+        # Get current device configuration
+        try:
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                return jsonify({"config": config})
+            else:
+                # Return default configuration
+                default_config = {
+                    "telescopeDevice": "",
+                    "telescopeBaudrate": 9600,
+                    "guiderDevice": "",
+                    "cameraDevice": ""
+                }
+                return jsonify({"config": default_config})
+        except Exception as e:
+            logger.error("Failed to load device config: %s", str(e))
+            return jsonify({"error": "Failed to load configuration"}), 500
+
+
+@app.route("/api/get_time")
 def get_time():
     """Returns the systems current time."""
     return jsonify({"current_time": datetime.now()})
 
 
-@app.route("/set_time")
+@app.route("/api/set_time")
 def set_time():
     """Set the system time to the one provided.
     If time_string is provided in ISO format, set the system time to it.

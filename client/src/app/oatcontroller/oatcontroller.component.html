@@ -1,8 +1,22 @@
 <div class="controller-container">
-  <!-- Status Card -->
+  <!-- Position Card -->
   <mat-card class="status-card">
     <mat-card-header>
       <mat-card-title>Mount Position</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-coordinate-display [ra]="currentPosition.ra" [dec]="currentPosition.dec"></app-coordinate-display>
+      <button mat-raised-button color="primary" (click)="updatePosition()">
+        <mat-icon>refresh</mat-icon>
+        Refresh Position
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Connection & Tracking Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Connection & Tracking</mat-card-title>
       <mat-card-subtitle>
         <span [class]="isConnected ? 'status-connected' : 'status-disconnected'">
           {{ isConnected ? 'Connected' : 'Disconnected' }}
@@ -13,20 +27,13 @@
       </mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <app-coordinate-display [ra]="currentPosition.ra" [dec]="currentPosition.dec"></app-coordinate-display>
-      <div class="button-row">
-        <button mat-raised-button color="primary" (click)="updatePosition()">
-          <mat-icon>refresh</mat-icon>
-          Refresh Position
-        </button>
-        <button mat-raised-button 
-                [color]="isTracking ? 'warn' : 'accent'" 
-                (click)="toggleTracking()" 
-                [disabled]="!isConnected">
-          <mat-icon>{{ isTracking ? 'pause' : 'play_arrow' }}</mat-icon>
-          {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
-        </button>
-      </div>
+      <button mat-raised-button 
+              [color]="isTracking ? 'warn' : 'accent'" 
+              (click)="toggleTracking()" 
+              [disabled]="!isConnected">
+        <mat-icon>{{ isTracking ? 'pause' : 'play_arrow' }}</mat-icon>
+        {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
+      </button>
     </mat-card-content>
   </mat-card>
 
@@ -66,15 +73,16 @@
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="targetForm" (ngSubmit)="setTarget()" class="target-form">
-        <mat-form-field>
-          <mat-label>RA (HH:MM:SS)</mat-label>
-          <input matInput formControlName="ra" placeholder="12:34:56">
-        </mat-form-field>
-        
-        <mat-form-field>
-          <mat-label>DEC (DD:MM:SS)</mat-label>
-          <input matInput formControlName="dec" placeholder="+45:30:00">
-        </mat-form-field>
+        <div class="coordinate-inputs">
+          <div class="coordinate-input">
+            <label>RA:</label>
+            <input formControlName="ra" placeholder="12:34:56">
+          </div>
+          <div class="coordinate-input">
+            <label>DEC:</label>
+            <input formControlName="dec" placeholder="+45:30:00">
+          </div>
+        </div>
         
         <button mat-raised-button color="primary" type="submit" [disabled]="!isConnected || !targetForm.valid">
           <mat-icon>my_location</mat-icon>

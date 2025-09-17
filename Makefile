@@ -102,7 +102,7 @@ build-manual:
 package: deploy-client
 	@echo "Creating application bundle..."
 	mkdir -p $(DIST_DIR)
-	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz --exclude='./venv' server/
+	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz --exclude='venv' server/
 	@echo "Bundle created: $(DIST_DIR)/oatheadless-bundle.tar.gz"
 	@echo "Contains: Flask server + static client files"
 

@@ -23,12 +23,14 @@ export class HomeComponent {
 
   private setDeviceTime() {
     const now = new Date();
-    const date = now.toLocaleDateString('en-US', {
+    const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+    
+    const date = utcNow.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
       year: '2-digit'
     });
-    const time = now.toLocaleTimeString('en-US', {
+    const time = utcNow.toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
