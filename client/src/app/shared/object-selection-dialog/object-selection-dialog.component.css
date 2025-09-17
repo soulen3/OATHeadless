@@ -1,0 +1,17 @@
+.catalog-table {
+  width: 100%;
+}
+
+mat-dialog-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+:host {
+  color: var(--mat-dialog-content-text-color, inherit);
+}
+
+.catalog-table th,
+.catalog-table td {
+  color: inherit;
+}

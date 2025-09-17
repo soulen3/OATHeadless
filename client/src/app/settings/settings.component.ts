@@ -235,7 +235,7 @@ export class SettingsComponent implements OnInit {
           this.useTime = utcNow.toISOString();
           this.errorMessage = '';
           const partial = dateSuccess ? 'Date set, time failed' : 'Time set, date failed';
-          this.messageService.addMessage(`Partial success: ${partial}`, 'warning');
+          this.messageService.addMessage(`Partial success: ${partial}`, 'info');
         } else {
           this.errorMessage = 'Failed to set date/time on mount';
           this.messageService.addMessage('Failed to set date/time on mount', 'error');

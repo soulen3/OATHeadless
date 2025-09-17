@@ -42,62 +42,8 @@ interface CatalogObject {
     MatFormFieldModule,
     MatInputModule
   ],
-  template: `
-    <h2 mat-dialog-title>Select Target Object</h2>
-    <mat-dialog-content>
-      <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 16px;">
-        <mat-label>Search objects</mat-label>
-        <input matInput [(ngModel)]="searchTerm" (input)="filterObjects()" placeholder="Search by name, type, or constellation">
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
-      
-      <table mat-table [dataSource]="filteredObjects" class="catalog-table">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let object">{{ object.name }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let object">{{ object.type }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="magnitude">
-          <th mat-header-cell *matHeaderCellDef>Mag</th>
-          <td mat-cell *matCellDef="let object">{{ object.magnitude }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="coordinates">
-          <th mat-header-cell *matHeaderCellDef>Coordinates</th>
-          <td mat-cell *matCellDef="let object">{{ object.ra }} / {{ object.dec }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef>Action</th>
-          <td mat-cell *matCellDef="let object">
-            <button mat-icon-button color="primary" (click)="selectObject(object)">
-              <mat-icon>check</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-    </mat-dialog-content>
-    <mat-dialog-actions>
-      <button mat-button (click)="close()">Cancel</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .catalog-table {
-      width: 100%;
-    }
-    mat-dialog-content {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-  `]
+  templateUrl: './object-selection-dialog.component.html',
+  styleUrl: './object-selection-dialog.component.css'
 })
 export class ObjectSelectionDialogComponent implements OnInit {
   displayedColumns: string[] = ['name', 'type', 'magnitude', 'coordinates', 'action'];
@@ -116,7 +62,7 @@ export class ObjectSelectionDialogComponent implements OnInit {
   }
 
   loadMessierCatalog() {
-    this.http.get<MessierObject[]>('/assets/messier.json').subscribe({
+    this.http.get<MessierObject[]>('assets/messier.json').subscribe({
       next: (messierData) => {
         this.catalogObjects = messierData.map(obj => ({
           name: obj.name ? `${obj.id} (${obj.name})` : obj.id,
@@ -127,9 +73,17 @@ export class ObjectSelectionDialogComponent implements OnInit {
           constellation: obj.constellation
         }));
         this.filteredObjects = [...this.catalogObjects];
+        console.log('Loaded', this.catalogObjects.length, 'Messier objects');
       },
       error: (error) => {
         console.error('Failed to load Messier catalog:', error);
+        // Fallback to a few sample objects if catalog fails to load
+        this.catalogObjects = [
+          { name: 'M31 (Andromeda Galaxy)', ra: '00:42:44', dec: '+41:16:09', type: 'Galaxy', magnitude: 3.44, constellation: 'Andromeda' },
+          { name: 'M42 (Orion Nebula)', ra: '05:35:17', dec: '-05:23:14', type: 'Nebula', magnitude: 4.0, constellation: 'Orion' },
+          { name: 'M13 (Hercules Cluster)', ra: '16:41:41', dec: '+36:27:37', type: 'Globular cluster', magnitude: 5.8, constellation: 'Hercules' }
+        ];
+        this.filteredObjects = [...this.catalogObjects];
       }
     });
   }

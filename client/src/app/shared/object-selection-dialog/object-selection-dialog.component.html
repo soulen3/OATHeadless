@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Select Target Object</h2>
+<mat-dialog-content>
+  <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 16px;">
+    <mat-label>Search objects</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (input)="filterObjects()" placeholder="Search by name, type, or constellation">
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+  
+  <table mat-table [dataSource]="filteredObjects" class="catalog-table">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let object">{{ object.name }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Type</th>
+      <td mat-cell *matCellDef="let object">{{ object.type }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="magnitude">
+      <th mat-header-cell *matHeaderCellDef>Mag</th>
+      <td mat-cell *matCellDef="let object">{{ object.magnitude }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="coordinates">
+      <th mat-header-cell *matHeaderCellDef>Coordinates</th>
+      <td mat-cell *matCellDef="let object">{{ object.ra }} / {{ object.dec }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef>Action</th>
+      <td mat-cell *matCellDef="let object">
+        <button mat-icon-button color="primary" (click)="selectObject(object)">
+          <mat-icon>check</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Cancel</button>
+</mat-dialog-actions>

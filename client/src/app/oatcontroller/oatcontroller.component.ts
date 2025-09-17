@@ -144,7 +144,8 @@ export class OATControllerComponent implements OnInit {
   openObjectDialog() {
     const dialogRef = this.dialog.open(ObjectSelectionDialogComponent, {
       width: '800px',
-      height: '600px'
+      height: '600px',
+      panelClass: 'custom-dialog-container'
     });
 
     dialogRef.afterClosed().subscribe(result => {
