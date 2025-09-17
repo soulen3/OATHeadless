@@ -30,6 +30,7 @@ app.register_blueprint(camera_bp)
 app.register_blueprint(mount_bp)
 app.register_blueprint(guider_bp)
 
+
 # Error Handling
 @app.errorhandler(404)
 def not_found(e):  # pylint: disable=unused-argument
@@ -62,11 +63,15 @@ def client_app(path=None):
 @app.route("/api/devices")
 def list_devices():
     """List available serial and USB devices."""
+    import glob
+    import os
+
     import serial.tools.list_ports
 
     devices = []
-    ports = serial.tools.list_ports.comports()
 
+    # Serial ports
+    ports = serial.tools.list_ports.comports()
     for port in ports:
         devices.append(
             {
@@ -77,8 +82,53 @@ def list_devices():
                 "pid": port.pid,
                 "manufacturer": port.manufacturer,
                 "product": port.product,
+                "type": "serial",
             }
         )
+
+    # USB video devices (cameras) using video4linux names
+    video_devices = glob.glob("/sys/class/video4linux/video*/name")
+    seen_names = set()
+    for name_file in video_devices:
+        try:
+            with open(name_file, "r") as f:
+                camera_name = f.read().strip()
+            if camera_name not in seen_names:
+                seen_names.add(camera_name)
+                video_num = name_file.split("/")[-2]  # Extract video0, video1, etc.
+                device_path = f"/dev/{video_num}"
+                devices.append(
+                    {
+                        "device": device_path,
+                        "description": camera_name,
+                        "hwid": "",
+                        "vid": None,
+                        "pid": None,
+                        "manufacturer": "Unknown",
+                        "product": camera_name,
+                        "type": "video",
+                    }
+                )
+        except (IOError, OSError):
+            continue
+
+    # USB devices (for guiders)
+    usb_devices = glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
+    for device in usb_devices:
+        # Skip if already in serial ports
+        if not any(d["device"] == device for d in devices):
+            devices.append(
+                {
+                    "device": device,
+                    "description": f"USB device {os.path.basename(device)}",
+                    "hwid": "",
+                    "vid": None,
+                    "pid": None,
+                    "manufacturer": "Unknown",
+                    "product": f"USB Device {os.path.basename(device)}",
+                    "type": "usb",
+                }
+            )
 
     return jsonify({"devices": devices})
 
@@ -88,29 +138,29 @@ def device_config():
     """Get or set device configuration."""
     import json
     import os
-    
+
     config_file = "device_config.json"
-    
+
     if request.method == "POST":
         # Save device configuration
         data = request.get_json()
         if not data:
             return jsonify({"error": "No configuration data provided"}), 400
-            
+
         try:
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(data, f, indent=2)
             logger.info("Device configuration saved: %s", data)
             return jsonify({"message": "Device configuration saved", "config": data})
         except Exception as e:
             logger.error("Failed to save device config: %s", str(e))
             return jsonify({"error": "Failed to save configuration"}), 500
-    
+
     else:
         # Get current device configuration
         try:
             if os.path.exists(config_file):
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config = json.load(f)
                 return jsonify({"config": config})
             else:
@@ -119,7 +169,7 @@ def device_config():
                     "telescopeDevice": "",
                     "telescopeBaudrate": 9600,
                     "guiderDevice": "",
-                    "cameraDevice": ""
+                    "cameraDevice": "",
                 }
                 return jsonify({"config": default_config})
         except Exception as e:

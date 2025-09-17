@@ -20,6 +20,7 @@ interface Device {
   pid: number;
   manufacturer: string;
   product: string;
+  type: string;
 }
 
 @Component({
@@ -63,6 +64,18 @@ export class SettingsComponent implements OnInit {
       guiderDevice: new FormControl(''),
       cameraDevice: new FormControl('')
     });
+  }
+
+  get serialDevices() {
+    return this.availableDevices.filter(device => device.type === 'serial');
+  }
+
+  get videoDevices() {
+    return this.availableDevices.filter(device => device.type === 'video');
+  }
+
+  get usbDevices() {
+    return this.availableDevices.filter(device => device.type === 'usb' || device.type === 'serial');
   }
 
   ngOnInit() {
@@ -211,10 +224,11 @@ export class SettingsComponent implements OnInit {
 
     this.http.post('/api/mount/datetime', payload).subscribe({
       next: (response: any) => {
+        this.messageService.addMessage(`Date set: ${response.date_set}, Time set: ${response.time_set}`, 'info');
         if (response.date_set && response.time_set) {
-          this.useTime = now.toISOString();
+          this.useTime = utcNow.toISOString();
           this.errorMessage = '';
-          this.messageService.addMessage('Time set successfully on mount', 'success');
+          this.messageService.addMessage('UTC time set successfully on mount', 'success');
         } else {
           this.errorMessage = 'Failed to set date/time on mount';
           this.messageService.addMessage('Failed to set date/time on mount', 'error');

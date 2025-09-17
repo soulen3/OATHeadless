@@ -280,6 +280,20 @@ def goto_home():
     return jsonify({"message": "Moving to home position"})
 
 
+@mount_bp.route("/slew", methods=["POST"])
+def slew():
+    """Slew to target coordinates."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    mount.write(":MS#")  # Slew to target
+    mount.disconnect()
+    return jsonify({"message": "Slewing to target coordinates"})
+
+
 @mount_bp.route("/move", methods=["POST"])
 def manual_move():
     """Manual movement in cardinal directions."""

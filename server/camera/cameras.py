@@ -1,6 +1,7 @@
 """Setup connections for guider and cammera."""
 
 import time
+
 import cv2
 import gphoto2 as gp
 

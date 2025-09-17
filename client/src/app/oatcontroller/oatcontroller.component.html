@@ -30,9 +30,59 @@
       <button mat-raised-button 
               [color]="isTracking ? 'warn' : 'accent'" 
               (click)="toggleTracking()" 
-              [disabled]="!isConnected">
+              [disabled]="!isConnected || isIndiConnected">
         <mat-icon>{{ isTracking ? 'pause' : 'play_arrow' }}</mat-icon>
         {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Device Status Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Device Status</mat-card-title>
+      <mat-card-subtitle>Camera and guider connection status</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="device-status">
+        <div class="device-item">
+          <mat-icon [class]="cameraStatus.connected ? 'status-connected' : 'status-disconnected'">
+            {{ cameraStatus.connected ? 'camera_alt' : 'camera_alt' }}
+          </mat-icon>
+          <span>Camera: </span>
+          <span [class]="cameraStatus.connected ? 'status-connected' : 'status-disconnected'">
+            {{ cameraStatus.connected ? (cameraStatus.device || 'Connected') : 'Not configured' }}
+          </span>
+        </div>
+        <div class="device-item">
+          <mat-icon [class]="guiderStatus.connected ? 'status-connected' : 'status-disconnected'">
+            {{ guiderStatus.connected ? 'gps_fixed' : 'gps_off' }}
+          </mat-icon>
+          <span>Guider: </span>
+          <span [class]="guiderStatus.connected ? 'status-connected' : 'status-disconnected'">
+            {{ guiderStatus.connected ? (guiderStatus.device || 'Connected') : 'Not configured' }}
+          </span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- INDI Server Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>INDI Server</mat-card-title>
+      <mat-card-subtitle>
+        <span [class]="isIndiConnected ? 'status-connected' : 'status-disconnected'">
+          {{ isIndiConnected ? 'INDI Connected' : 'INDI Disconnected' }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-raised-button 
+              [color]="isIndiConnected ? 'warn' : 'primary'" 
+              (click)="toggleIndiConnection()">
+        <mat-icon>{{ isIndiConnected ? 'link_off' : 'link' }}</mat-icon>
+        {{ isIndiConnected ? 'Disconnect INDI' : 'Connect INDI' }}
       </button>
     </mat-card-content>
   </mat-card>
@@ -45,19 +95,23 @@
     </mat-card-header>
     <mat-card-content>
       <div class="button-grid">
-        <button mat-raised-button color="accent" (click)="autoHome()" [disabled]="!isConnected">
+        <button mat-raised-button color="accent" (click)="homeRA()" [disabled]="!isConnected || isIndiConnected">
           <mat-icon>home</mat-icon>
-          Auto Home
+          Home RA
         </button>
-        <button mat-raised-button color="primary" (click)="setHome()" [disabled]="!isConnected">
+        <button mat-raised-button color="accent" (click)="homeDEC()" [disabled]="!isConnected || isIndiConnected">
+          <mat-icon>home</mat-icon>
+          Home DEC
+        </button>
+        <button mat-raised-button color="primary" (click)="setHome()" [disabled]="!isConnected || isIndiConnected">
           <mat-icon>flag</mat-icon>
           Set Home
         </button>
-        <button mat-raised-button color="primary" (click)="gotoHome()" [disabled]="!isConnected">
+        <button mat-raised-button color="primary" (click)="gotoHome()" [disabled]="!isConnected || isIndiConnected">
           <mat-icon>home_work</mat-icon>
           Go to Home
         </button>
-        <button mat-raised-button color="warn" (click)="park()" [disabled]="!isConnected">
+        <button mat-raised-button color="warn" (click)="park()" [disabled]="!isConnected || isIndiConnected">
           <mat-icon>local_parking</mat-icon>
           Park
         </button>
@@ -84,9 +138,14 @@
           </div>
         </div>
         
-        <button mat-raised-button color="primary" type="submit" [disabled]="!isConnected || !targetForm.valid">
+        <button mat-raised-button color="primary" type="submit" [disabled]="!isConnected || !targetForm.valid || isIndiConnected">
           <mat-icon>my_location</mat-icon>
           Set Target
+        </button>
+        
+        <button mat-raised-button color="accent" (click)="slew()" [disabled]="!isConnected || isIndiConnected">
+          <mat-icon>navigation</mat-icon>
+          Slew to Target
         </button>
       </form>
     </mat-card-content>
@@ -101,23 +160,23 @@
     <mat-card-content>
       <div class="manual-controls">
         <div class="control-row">
-          <button mat-fab color="primary" (click)="manualMove('north')" [disabled]="!isConnected">
+          <button mat-fab color="primary" (click)="manualMove('north')" [disabled]="!isConnected || isIndiConnected">
             <mat-icon>keyboard_arrow_up</mat-icon>
           </button>
         </div>
         <div class="control-row">
-          <button mat-fab color="primary" (click)="manualMove('west')" [disabled]="!isConnected">
+          <button mat-fab color="primary" (click)="manualMove('west')" [disabled]="!isConnected || isIndiConnected">
             <mat-icon>keyboard_arrow_left</mat-icon>
           </button>
-          <button mat-fab color="warn" (click)="manualMove('stop')" [disabled]="!isConnected">
+          <button mat-fab color="warn" (click)="manualMove('stop')" [disabled]="!isConnected || isIndiConnected">
             <mat-icon>stop</mat-icon>
           </button>
-          <button mat-fab color="primary" (click)="manualMove('east')" [disabled]="!isConnected">
+          <button mat-fab color="primary" (click)="manualMove('east')" [disabled]="!isConnected || isIndiConnected">
             <mat-icon>keyboard_arrow_right</mat-icon>
           </button>
         </div>
         <div class="control-row">
-          <button mat-fab color="primary" (click)="manualMove('south')" [disabled]="!isConnected">
+          <button mat-fab color="primary" (click)="manualMove('south')" [disabled]="!isConnected || isIndiConnected">
             <mat-icon>keyboard_arrow_down</mat-icon>
           </button>
         </div>

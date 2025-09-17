@@ -26,10 +26,11 @@ class MountSerial:
     def _get_configured_device(self):
         """Get configured telescope device from config file."""
         import json
+
         try:
             config_file = "device_config.json"
             if os.path.exists(config_file):
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config = json.load(f)
                     device = config.get("telescopeDevice", "")
                     if device:
@@ -37,7 +38,7 @@ class MountSerial:
                         return device
         except Exception as e:
             logger.warning("Failed to load device config: %s", str(e))
-        
+
         # Fallback to default device
         logger.info("Using default telescope device: %s", DEFAULT_DEVICE)
         return DEFAULT_DEVICE
@@ -45,17 +46,18 @@ class MountSerial:
     def _get_configured_baudrate(self):
         """Get configured telescope baudrate from config file."""
         import json
+
         try:
             config_file = "device_config.json"
             if os.path.exists(config_file):
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config = json.load(f)
                     baudrate = config.get("telescopeBaudrate", 9600)
                     logger.info("Using configured telescope baudrate: %s", baudrate)
                     return baudrate
         except Exception as e:
             logger.warning("Failed to load baudrate config: %s", str(e))
-        
+
         return 9600
 
     def connect(self):

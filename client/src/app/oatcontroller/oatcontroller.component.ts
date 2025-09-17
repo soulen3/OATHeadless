@@ -45,6 +45,9 @@ export class OATControllerComponent implements OnInit {
   targetForm: FormGroup;
   isConnected = false;
   isTracking = false;
+  isIndiConnected = false;
+  cameraStatus = { connected: false, device: null };
+  guiderStatus = { connected: false, device: null };
   
   starCatalog: CatalogObject[] = [
     { name: 'Sirius', ra: '06:45:09', dec: '-16:42:58', type: 'Star', magnitude: -1.46 },
@@ -76,6 +79,64 @@ export class OATControllerComponent implements OnInit {
   ngOnInit() {
     this.updatePosition();
     this.updateTrackingStatus();
+    this.updateIndiStatus();
+    this.updateCameraStatus();
+    this.updateGuiderStatus();
+    setInterval(() => {
+      this.updatePosition();
+      this.updateTrackingStatus();
+      this.updateIndiStatus();
+      this.updateCameraStatus();
+      this.updateGuiderStatus();
+    }, 5000);
+  }
+
+  updateCameraStatus() {
+    this.http.get<any>('/api/camera/status').subscribe({
+      next: (response) => {
+        this.cameraStatus = response;
+      },
+      error: (error) => {
+        this.cameraStatus = { connected: false, device: null };
+      }
+    });
+  }
+
+  updateGuiderStatus() {
+    this.http.get<any>('/api/guider/status').subscribe({
+      next: (response) => {
+        this.guiderStatus = response;
+      },
+      error: (error) => {
+        this.guiderStatus = { connected: false, device: null };
+      }
+    });
+  }
+
+  updateIndiStatus() {
+    this.http.get<any>('/api/mount/indi/status').subscribe({
+      next: (response) => {
+        this.isIndiConnected = response.connected;
+      },
+      error: (error) => {
+        this.isIndiConnected = false;
+      }
+    });
+  }
+
+  toggleIndiConnection() {
+    const action = this.isIndiConnected ? 'disconnect' : 'connect';
+    this.messageService.addMessage(`${action === 'connect' ? 'Connecting to' : 'Disconnecting from'} INDI server...`, 'info');
+    
+    this.http.post('/api/mount/indi/connection', { action }).subscribe({
+      next: (response: any) => {
+        this.isIndiConnected = action === 'connect';
+        this.messageService.addMessage(response.message, 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('INDI connection failed: ' + (error.error?.error || error.message), 'error');
+      }
+    });
   }
 
   updateTrackingStatus() {
@@ -125,15 +186,28 @@ export class OATControllerComponent implements OnInit {
     });
   }
 
-  autoHome() {
-    this.messageService.addMessage('Starting auto-home sequence...', 'info');
+  homeRA() {
+    this.messageService.addMessage('Homing RA axis...', 'info');
     
-    this.http.post('/api/mount/home', {}).subscribe({
+    this.http.post('/api/mount/home/ra', {}).subscribe({
       next: (response: any) => {
-        this.messageService.addMessage(response.message || 'Auto-home completed', 'success');
+        this.messageService.addMessage(response.message || 'RA home completed', 'success');
       },
       error: (error) => {
-        this.messageService.addMessage('Auto-home failed: ' + (error.error?.error || error.message), 'error');
+        this.messageService.addMessage('RA home failed: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  homeDEC() {
+    this.messageService.addMessage('Homing DEC axis...', 'info');
+    
+    this.http.post('/api/mount/home/dec', {}).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage(response.message || 'DEC home completed', 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('DEC home failed: ' + (error.error?.error || error.message), 'error');
       }
     });
   }
@@ -173,6 +247,19 @@ export class OATControllerComponent implements OnInit {
       },
       error: (error) => {
         this.messageService.addMessage('Failed to park: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  slew() {
+    this.messageService.addMessage('Slewing to target...', 'info');
+    
+    this.http.post('/api/mount/slew', {}).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage(response.message, 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('Slew failed: ' + (error.error?.error || error.message), 'error');
       }
     });
   }

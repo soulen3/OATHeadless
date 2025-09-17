@@ -123,6 +123,14 @@ test: test-server
 test-server: install-server
 	cd $(SERVER_DIR) && $(PYTHON) -m pytest mount/test_*.py -v
 
+# Code formatting
+.PHONY: format
+format: install-server
+	@echo "Formatting Python code with black and isort..."
+	cd $(SERVER_DIR) && ./venv/bin/python -m black .
+	cd $(SERVER_DIR) && ./venv/bin/python -m isort .
+	@echo "Code formatting complete"
+
 # Check system
 .PHONY: check
 check:
@@ -162,6 +170,7 @@ help:
 	@echo "  package        - Create complete application bundle"
 	@echo "  package-server - Create server-only bundle"
 	@echo "  test-server    - Run server tests"
+	@echo "  format         - Format Python code with black and isort"
 	@echo "  check          - Check system requirements"
 	@echo "  clean          - Clean build artifacts"
 	@echo "  clean-all      - Clean everything including venv"
