@@ -9,17 +9,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
+import { MatDialog } from '@angular/material/dialog';
 import { MessageConsoleService } from '../message-console.service';
 import { CoordinateDisplayComponent } from '../shared/coordinate-display/coordinate-display.component';
-
-interface CatalogObject {
-  name: string;
-  ra: string;
-  dec: string;
-  type: string;
-  magnitude: number;
-}
+import { ObjectSelectionDialogComponent } from '../shared/object-selection-dialog/object-selection-dialog.component';
 
 @Component({
   selector: 'app-oatcontroller',
@@ -34,7 +27,6 @@ interface CatalogObject {
     MatIconModule,
     MatGridListModule,
     MatSelectModule,
-    MatTableModule,
     CoordinateDisplayComponent
   ],
   templateUrl: './oatcontroller.component.html',
@@ -48,27 +40,11 @@ export class OATControllerComponent implements OnInit {
   isIndiConnected = false;
   cameraStatus = { connected: false, device: null };
   guiderStatus = { connected: false, device: null };
-  
-  starCatalog: CatalogObject[] = [
-    { name: 'Sirius', ra: '06:45:09', dec: '-16:42:58', type: 'Star', magnitude: -1.46 },
-    { name: 'Canopus', ra: '06:23:57', dec: '-52:41:44', type: 'Star', magnitude: -0.74 },
-    { name: 'Arcturus', ra: '14:15:40', dec: '+19:10:57', type: 'Star', magnitude: -0.05 },
-    { name: 'Vega', ra: '18:36:56', dec: '+38:47:01', type: 'Star', magnitude: 0.03 },
-    { name: 'Capella', ra: '05:16:41', dec: '+45:59:53', type: 'Star', magnitude: 0.08 },
-    { name: 'Rigel', ra: '05:14:32', dec: '-08:12:06', type: 'Star', magnitude: 0.13 },
-    { name: 'Procyon', ra: '07:39:18', dec: '+05:13:30', type: 'Star', magnitude: 0.34 },
-    { name: 'Betelgeuse', ra: '05:55:10', dec: '+07:24:25', type: 'Star', magnitude: 0.50 },
-    { name: 'M31 (Andromeda)', ra: '00:42:44', dec: '+41:16:09', type: 'Galaxy', magnitude: 3.44 },
-    { name: 'M42 (Orion Nebula)', ra: '05:35:17', dec: '-05:23:14', type: 'Nebula', magnitude: 4.0 },
-    { name: 'M45 (Pleiades)', ra: '03:47:29', dec: '+24:07:00', type: 'Cluster', magnitude: 1.6 },
-    { name: 'M13 (Hercules)', ra: '16:41:41', dec: '+36:27:37', type: 'Cluster', magnitude: 5.8 }
-  ];
-
-  displayedColumns: string[] = ['name', 'type', 'magnitude', 'coordinates', 'action'];
 
   constructor(
     private http: HttpClient,
-    private messageService: MessageConsoleService
+    private messageService: MessageConsoleService,
+    private dialog: MatDialog
   ) {
     this.targetForm = new FormGroup({
       ra: new FormControl('', [Validators.required]),
@@ -165,7 +141,20 @@ export class OATControllerComponent implements OnInit {
     });
   }
 
-  selectCatalogTarget(target: CatalogObject) {
+  openObjectDialog() {
+    const dialogRef = this.dialog.open(ObjectSelectionDialogComponent, {
+      width: '800px',
+      height: '600px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.selectCatalogTarget(result);
+      }
+    });
+  }
+
+  selectCatalogTarget(target: any) {
     this.targetForm.patchValue({
       ra: target.ra,
       dec: target.dec

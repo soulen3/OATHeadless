@@ -52,6 +52,10 @@ OATHeadless provides a modern web interface for OAT telescope mount control, fea
 ### Target Management
 - `GET /mount/target` - Get current target coordinates
 - `POST /mount/target` - Set target coordinates
+- **Messier Catalog** - Complete catalog of 110 Messier objects with searchable dialog interface
+  - Source: [celestialprogramming.com/snippets/messier.json](https://celestialprogramming.com/snippets/messier.json)
+  - Search by object name, type, or constellation
+  - Automatic coordinate conversion from decimal to HMS/DMS format
 
 ### INDI Integration
 - `GET /mount/indi/status` - INDI server connection status

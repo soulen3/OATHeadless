@@ -224,11 +224,18 @@ export class SettingsComponent implements OnInit {
 
     this.http.post('/api/mount/datetime', payload).subscribe({
       next: (response: any) => {
-        this.messageService.addMessage(`Date set: ${response.date_set}, Time set: ${response.time_set}`, 'info');
-        if (response.date_set && response.time_set) {
+        const dateSuccess = response.date_set === true;
+        const timeSuccess = response.time_set === true;
+        
+        if (dateSuccess && timeSuccess) {
           this.useTime = utcNow.toISOString();
           this.errorMessage = '';
           this.messageService.addMessage('UTC time set successfully on mount', 'success');
+        } else if (dateSuccess || timeSuccess) {
+          this.useTime = utcNow.toISOString();
+          this.errorMessage = '';
+          const partial = dateSuccess ? 'Date set, time failed' : 'Time set, date failed';
+          this.messageService.addMessage(`Partial success: ${partial}`, 'warning');
         } else {
           this.errorMessage = 'Failed to set date/time on mount';
           this.messageService.addMessage('Failed to set date/time on mount', 'error');
