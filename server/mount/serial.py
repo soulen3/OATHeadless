@@ -15,7 +15,7 @@ DEFAULT_DEVICE = "/dev/serial/by-id/usb-Raspberry_Pi_Pico_E662608797224B29-if00"
 class MountSerial:
     """Handles serial communication with OAT mount."""
 
-    def __init__(self, device=None, baudrate=None, timeout=0.01):
+    def __init__(self, device=None, baudrate=None, timeout=0.5):
         """Initialize serial connection parameters."""
         self.device = device or self._get_configured_device()
         self.baudrate = baudrate or self._get_configured_baudrate()
@@ -89,7 +89,11 @@ class MountSerial:
             return False
 
         try:
+            import time
+
             self.serial.write(bytes(command, "utf-8"))
+            self.serial.flush()  # Ensure command is sent
+            time.sleep(0.1)  # Give mount time to process
             return True
         except Exception as e:
             logger.error("Error sending data: %s", e)
@@ -102,12 +106,29 @@ class MountSerial:
             return None
 
         try:
+            import time
+
             if num_bytes:
                 data = self.serial.read(num_bytes)
             else:
-                data = self.serial.readline()
+                # For OAT responses, read until '#' terminator or timeout
+                data = b""
+                start_time = time.time()
+                while time.time() - start_time < self.timeout:
+                    if self.serial.in_waiting > 0:
+                        byte = self.serial.read(1)
+                        data += byte
+                        if byte == b"#":
+                            break
+                    else:
+                        time.sleep(0.01)  # Small delay to prevent busy waiting
 
-            return data.decode("utf-8").strip()
+            response = data.decode("utf-8").strip()
+            # Remove trailing '#' if present
+            if response.endswith("#"):
+                response = response[:-1]
+
+            return response
 
         except Exception as e:
             logger.error("Error reading data: %s", e)

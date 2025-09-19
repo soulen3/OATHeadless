@@ -4,7 +4,8 @@ import logging
 import time
 from datetime import datetime
 
-from flask import Flask, abort, jsonify, render_template, request
+from flask import (Flask, abort, jsonify, render_template, request,
+                   send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .camera.routes import camera_bp
@@ -60,11 +61,63 @@ def client_app(path=None):
     return render_template("index.html")
 
 
+@app.route("/api/guider/capture")
+def capture_guider_image():
+    """Capture image from guider device."""
+    import base64
+    import json
+    import os
+
+    import cv2
+
+    # Get configured guider device
+    config_file = "device_config.json"
+    guider_device = ""
+
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r") as f:
+                config = json.load(f)
+                guider_device = config.get("guiderDevice", "")
+        except:
+            pass
+
+    if not guider_device or not os.path.exists(guider_device):
+        return jsonify({"error": "Guider device not configured or not available"}), 400
+
+    try:
+        # Extract video device number from path (e.g., /dev/video0 -> 0)
+        device_num = int(guider_device.split("video")[-1])
+
+        # Capture image using OpenCV
+        cap = cv2.VideoCapture(device_num)
+        if not cap.isOpened():
+            return jsonify({"error": "Failed to open guider device"}), 500
+
+        ret, frame = cap.read()
+        cap.release()
+
+        if not ret:
+            return jsonify({"error": "Failed to capture image"}), 500
+
+        # Encode image as base64 JPEG
+        _, buffer = cv2.imencode(".jpg", frame)
+        img_base64 = base64.b64encode(buffer).decode("utf-8")
+
+        return jsonify(
+            {"image": f"data:image/jpeg;base64,{img_base64}", "timestamp": time.time()}
+        )
+
+    except Exception as e:
+        return jsonify({"error": f"Image capture failed: {str(e)}"}), 500
+
+
 @app.route("/api/devices")
 def list_devices():
     """List available serial and USB devices."""
     import glob
     import os
+    import subprocess
 
     import serial.tools.list_ports
 
@@ -86,31 +139,40 @@ def list_devices():
             }
         )
 
-    # USB video devices (cameras) using video4linux names
-    video_devices = glob.glob("/sys/class/video4linux/video*/name")
-    seen_names = set()
-    for name_file in video_devices:
-        try:
-            with open(name_file, "r") as f:
-                camera_name = f.read().strip()
-            if camera_name not in seen_names:
-                seen_names.add(camera_name)
-                video_num = name_file.split("/")[-2]  # Extract video0, video1, etc.
-                device_path = f"/dev/{video_num}"
+    # USB video devices using v4l2-ctl
+    try:
+        result = subprocess.run(
+            ["v4l2-ctl", "--list-devices"], capture_output=True, text=True, check=True
+        )
+
+        lines = result.stdout.strip().split("\n")
+        current_camera = None
+
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith("\t") and not line.startswith(" "):
+                # Camera name line
+                current_camera = line.rstrip(":")
+            elif line.startswith("\t/dev/video") and current_camera:
+                # First video device for this camera
+                device_path = line.strip()
                 devices.append(
                     {
                         "device": device_path,
-                        "description": camera_name,
+                        "description": current_camera,
                         "hwid": "",
                         "vid": None,
                         "pid": None,
                         "manufacturer": "Unknown",
-                        "product": camera_name,
+                        "product": current_camera,
                         "type": "video",
                     }
                 )
-        except (IOError, OSError):
-            continue
+                current_camera = None  # Only take first device per camera
+
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback to old method if v4l2-ctl not available
+        pass
 
     # USB devices (for guiders)
     usb_devices = glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
@@ -175,6 +237,12 @@ def device_config():
         except Exception as e:
             logger.error("Failed to load device config: %s", str(e))
             return jsonify({"error": "Failed to load configuration"}), 500
+
+
+@app.route("/static/images/<filename>")
+def serve_image(filename):
+    """Serve captured images."""
+    return send_from_directory("/var/www/images", filename)
 
 
 @app.route("/api/get_time")

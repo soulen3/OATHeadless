@@ -35,9 +35,11 @@ import { ObjectSelectionDialogComponent } from '../shared/object-selection-dialo
 export class OATControllerComponent implements OnInit {
   currentPosition = { ra: '--:--:--', dec: '--:--:--' };
   targetForm: FormGroup;
+  homingOffsetForm: FormGroup;
   isConnected = false;
   isTracking = false;
   isIndiConnected = false;
+  isIndiServerRunning = false;
   cameraStatus = { connected: false, device: null };
   guiderStatus = { connected: false, device: null };
 
@@ -50,78 +52,80 @@ export class OATControllerComponent implements OnInit {
       ra: new FormControl('', [Validators.required]),
       dec: new FormControl('', [Validators.required])
     });
-  }
 
-  ngOnInit() {
-    this.updatePosition();
-    this.updateTrackingStatus();
-    this.updateIndiStatus();
-    this.updateCameraStatus();
-    this.updateGuiderStatus();
-    setInterval(() => {
-      this.updatePosition();
-      this.updateTrackingStatus();
-      this.updateIndiStatus();
-      this.updateCameraStatus();
-      this.updateGuiderStatus();
-    }, 5000);
-  }
-
-  updateCameraStatus() {
-    this.http.get<any>('/api/camera/status').subscribe({
-      next: (response) => {
-        this.cameraStatus = response;
-      },
-      error: (error) => {
-        this.cameraStatus = { connected: false, device: null };
-      }
+    this.homingOffsetForm = new FormGroup({
+      raOffset: new FormControl(0),
+      decOffset: new FormControl(0)
     });
   }
 
-  updateGuiderStatus() {
-    this.http.get<any>('/api/guider/status').subscribe({
+  ngOnInit() {
+    this.updateAllStatus();
+    setInterval(() => {
+      this.updateAllStatus();
+    }, 5000);
+  }
+
+  updateAllStatus() {
+    this.http.get<any>('/api/mount/status/all').subscribe({
       next: (response) => {
-        this.guiderStatus = response;
+        // Mount status
+        this.isConnected = response.mount.connected;
+        this.currentPosition = response.mount.position;
+        this.isTracking = response.mount.tracking;
+        this.isIndiConnected = response.mount.indi_connected;
+        this.isIndiServerRunning = response.mount.indi_server_running;
+        
+        // Device status
+        this.cameraStatus = response.camera;
+        this.guiderStatus = response.guider;
       },
       error: (error) => {
+        this.isConnected = false;
+        this.cameraStatus = { connected: false, device: null };
         this.guiderStatus = { connected: false, device: null };
       }
     });
   }
 
-  updateIndiStatus() {
-    this.http.get<any>('/api/mount/indi/status').subscribe({
-      next: (response) => {
-        this.isIndiConnected = response.connected;
+  startIndiServer() {
+    this.messageService.addMessage('Starting INDI server...', 'info');
+    
+    this.http.post('/api/mount/indi/server', { action: 'start' }).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage(response.message, 'success');
       },
       error: (error) => {
-        this.isIndiConnected = false;
+        this.messageService.addMessage('Failed to start INDI server: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  stopIndiServer() {
+    this.messageService.addMessage('Stopping INDI server...', 'info');
+    
+    this.http.post('/api/mount/indi/server', { action: 'stop' }).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage(response.message, 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to stop INDI server: ' + (error.error?.error || error.message), 'error');
       }
     });
   }
 
   toggleIndiConnection() {
-    const action = this.isIndiConnected ? 'disconnect' : 'connect';
-    this.messageService.addMessage(`${action === 'connect' ? 'Connecting to' : 'Disconnecting from'} INDI server...`, 'info');
+    const connect = !this.isIndiConnected;
+    this.messageService.addMessage(`${connect ? 'Connecting to' : 'Disconnecting from'} INDI server...`, 'info');
     
-    this.http.post('/api/mount/indi/connection', { action }).subscribe({
+    this.http.post('/api/mount/indi/connection', { connect }).subscribe({
       next: (response: any) => {
-        this.isIndiConnected = action === 'connect';
         this.messageService.addMessage(response.message, 'success');
+        // Update status immediately to reflect change
+        this.updateAllStatus();
       },
       error: (error) => {
         this.messageService.addMessage('INDI connection failed: ' + (error.error?.error || error.message), 'error');
-      }
-    });
-  }
-
-  updateTrackingStatus() {
-    this.http.get<any>('/api/mount/tracking').subscribe({
-      next: (response) => {
-        this.isTracking = response.tracking;
-      },
-      error: (error) => {
-        this.messageService.addMessage('Failed to get tracking status: ' + (error.error?.error || error.message), 'error');
       }
     });
   }
@@ -268,6 +272,20 @@ export class OATControllerComponent implements OnInit {
         }
       });
     }
+  }
+
+  setHomingOffset() {
+    const offsets = this.homingOffsetForm.value;
+    this.messageService.addMessage(`Setting homing offset: RA ${offsets.raOffset}, DEC ${offsets.decOffset}`, 'info');
+    
+    this.http.post('/api/mount/home/offset', offsets).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage('Homing offset set successfully', 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to set homing offset: ' + (error.error?.error || error.message), 'error');
+      }
+    });
   }
 
   manualMove(direction: string) {

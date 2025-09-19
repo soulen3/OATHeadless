@@ -74,10 +74,6 @@ export class SettingsComponent implements OnInit {
     return this.availableDevices.filter(device => device.type === 'video');
   }
 
-  get usbDevices() {
-    return this.availableDevices.filter(device => device.type === 'usb' || device.type === 'serial');
-  }
-
   ngOnInit() {
     this.loadAvailableDevices();
     this.loadDeviceConfiguration();

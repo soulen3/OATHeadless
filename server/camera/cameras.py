@@ -1,5 +1,6 @@
 """Setup connections for guider and cammera."""
 
+import os
 import time
 
 import cv2
@@ -64,10 +65,27 @@ class CVCamera:
 
     def get_image(self):
         cap = cv2.VideoCapture(self.index)
+        if not cap.isOpened():
+            cap.release()
+            raise Exception(f"Cannot open camera at index {self.index}")
+
         ret, frame = cap.read()
-        if ret:
-            cv2.imwrite(f"{IMAGE_PATH}/{self.output_file_name()}", image)
         cap.release()
+
+        if not ret:
+            raise Exception("Failed to capture frame from camera")
+
+        filename = self.output_file_name()
+        filepath = f"{IMAGE_PATH}/{filename}"
+
+        # Ensure directory exists
+        os.makedirs(IMAGE_PATH, exist_ok=True)
+
+        success = cv2.imwrite(filepath, frame)
+        if not success:
+            raise Exception("Failed to save image")
+
+        return filename
 
     def output_file_name(self):
         return f"{self.name}_{time.time()}.jpg"

@@ -16,6 +16,80 @@ mount_bp = Blueprint("mount", __name__, url_prefix="/api/mount")
 
 
 @mount_bp.route("/")
+@mount_bp.route("/status/all")
+def get_all_status():
+    """Get comprehensive mount, camera, and guider status."""
+    import json
+    import os
+
+    # Mount status
+    mount = MountSerial()
+    mount.connect()
+
+    mount_status = {
+        "connected": mount.is_connected,
+        "position": {"ra": "--:--:--", "dec": "--:--:--"},
+        "tracking": False,
+        "indi_connected": False,
+        "indi_server_running": False,
+    }
+
+    # Check INDI server status using IndiClient
+    from .indi_client import IndiClient
+
+    indi_client = IndiClient()
+    mount_status["indi_server_running"] = indi_client.is_server_running()
+    mount_status["indi_connected"] = (
+        indi_client.get_mount_status() if indi_client.is_server_running() else False
+    )
+
+    if mount.is_connected:
+        # Get position
+        mount.write(":GR#")
+        ra = mount.read_data()
+        mount.write(":GD#")
+        dec = mount.read_data()
+        if ra and dec:
+            mount_status["position"] = {"ra": ra, "dec": dec}
+
+        # Get tracking status
+        mount.write(":GT#")
+        tracking_response = mount.read_data()
+        mount_status["tracking"] = (
+            tracking_response == "1" if tracking_response else False
+        )
+
+    mount.disconnect()
+
+    # Device status
+    config_file = "device_config.json"
+    camera_device = ""
+    guider_device = ""
+
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r") as f:
+                config = json.load(f)
+                camera_device = config.get("cameraDevice", "")
+                guider_device = config.get("guiderDevice", "")
+        except:
+            pass
+
+    camera_status = {
+        "connected": os.path.exists(camera_device) if camera_device else False,
+        "device": camera_device,
+    }
+
+    guider_status = {
+        "connected": os.path.exists(guider_device) if guider_device else False,
+        "device": guider_device,
+    }
+
+    return jsonify(
+        {"mount": mount_status, "camera": camera_status, "guider": guider_status}
+    )
+
+
 @mount_bp.route("/status")
 def status():
     """Get comprehensive mount status using multiple Meade commands."""
@@ -432,6 +506,80 @@ def set_datetime():
             "time": data["time"],
         }
     )
+
+
+@mount_bp.route("/indi/server", methods=["POST"])
+def indi_server_control():
+    """Start or stop INDI server."""
+    import subprocess
+
+    data = request.get_json()
+    if not data or "action" not in data:
+        return jsonify({"error": "action required (start/stop)"}), 400
+
+    action = data["action"]
+
+    try:
+        if action == "start":
+            # Start INDI server
+            subprocess.run(["sudo", "systemctl", "start", "indiwebmanager"], check=True)
+            return jsonify({"message": "INDI server started", "action": "start"})
+        elif action == "stop":
+            # Stop INDI server
+            subprocess.run(["sudo", "systemctl", "stop", "indiwebmanager"], check=True)
+            return jsonify({"message": "INDI server stopped", "action": "stop"})
+        else:
+            return jsonify({"error": "Invalid action. Use 'start' or 'stop'"}), 400
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": f"Failed to {action} INDI server: {str(e)}"}), 500
+
+
+@mount_bp.route("/home/offset", methods=["GET", "POST"])
+def home_offset():
+    """Get or set homing offset values."""
+    mount = MountSerial()
+    mount.connect()
+
+    if not mount.is_connected:
+        return jsonify({"error": "Mount not connected"}), 503
+
+    if request.method == "GET":
+        # Get current offset values using correct OAT commands
+        mount.write(":GXHR#")  # Get RA homing offset
+        ra_offset = mount.read_data()
+
+        mount.write(":XGHD#")  # Get DEC homing offset
+        dec_offset = mount.read_data()
+
+        mount.disconnect()
+        return jsonify(
+            {
+                "ra_offset": float(ra_offset) if ra_offset else 0.0,
+                "dec_offset": float(dec_offset) if dec_offset else 0.0,
+            }
+        )
+
+    else:  # POST
+        data = request.get_json()
+        if not data or "raOffset" not in data or "decOffset" not in data:
+            return jsonify({"error": "raOffset and decOffset required"}), 400
+
+        # Set offsets using correct OAT commands
+        mount.write(f":XSHR{data['raOffset']:+.1f}#")  # Set RA homing offset
+        ra_response = mount.read_data()
+
+        mount.write(f":XSHD{data['decOffset']:+.1f}#")  # Set DEC homing offset
+        dec_response = mount.read_data()
+
+        mount.disconnect()
+        return jsonify(
+            {
+                "ra_offset_set": ra_response == "1",
+                "dec_offset_set": dec_response == "1",
+                "ra_offset": data["raOffset"],
+                "dec_offset": data["decOffset"],
+            }
+        )
 
 
 @mount_bp.route("/indi/connection", methods=["POST"])

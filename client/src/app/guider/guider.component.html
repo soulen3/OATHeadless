@@ -1,8 +1,83 @@
-<p>Guider module isn't implemented yet.</p>
-<h3>TODO:</h3>
-<p>Check connection and status</p>
-<p>Capture and display picture</p>
-<p>Display liveview</p>
-<p>Check Connection to PHD2</p>
-<p>Configure PHD2</p>
-<p>Start Guiding</p>
+<div class="guider-container">
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>Guider Camera</mat-card-title>
+      <mat-card-subtitle>
+        Device: {{ deviceStatus.device || 'Not configured' }} - 
+        <span [class]="deviceStatus.connected ? 'status-connected' : 'status-disconnected'">
+          {{ deviceStatus.connected ? 'Connected' : 'Disconnected' }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-raised-button color="primary" (click)="captureImage()" [disabled]="capturing">
+        <mat-icon>camera_alt</mat-icon>
+        {{ capturing ? 'Capturing...' : 'Capture Image' }}
+      </button>
+      
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+      
+      <div class="image-container" *ngIf="capturedImage">
+        <img [src]="capturedImage" alt="Guider Image" class="guider-image">
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>PHD2 Process</mat-card-title>
+      <mat-card-subtitle>
+        PHD2 Process: 
+        <span [class]="phd2ProcessRunning ? 'status-connected' : 'status-disconnected'">
+          {{ phd2ProcessRunning ? 'Running' : 'Stopped' }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="button-group">
+        <button mat-raised-button color="primary" (click)="startPHD2Process()" [disabled]="phd2ProcessRunning">
+          <mat-icon>play_arrow</mat-icon>
+          Start PHD2
+        </button>
+        
+        <button mat-raised-button color="warn" (click)="stopPHD2Process()" [disabled]="!phd2ProcessRunning">
+          <mat-icon>stop</mat-icon>
+          Stop PHD2
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>PHD2 Guiding</mat-card-title>
+      <mat-card-subtitle>
+        PHD2: 
+        <span [class]="phd2Status.connected ? 'status-connected' : 'status-disconnected'">
+          {{ phd2Status.connected ? 'Connected' : 'Disconnected' }}
+        </span>
+        - State: {{ phd2Status.state }}
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="button-group">
+        <button mat-raised-button color="primary" (click)="connectPHD2()" [disabled]="phd2Connecting || phd2Status.connected">
+          <mat-icon>link</mat-icon>
+          {{ phd2Connecting ? 'Connecting...' : 'Connect PHD2' }}
+        </button>
+        
+        <button mat-raised-button color="accent" (click)="startGuiding()" [disabled]="!phd2Status.connected || phd2Status.state === 'Guiding'">
+          <mat-icon>play_arrow</mat-icon>
+          Start Guiding
+        </button>
+        
+        <button mat-raised-button color="warn" (click)="stopGuiding()" [disabled]="!phd2Status.connected || phd2Status.state === 'Stopped'">
+          <mat-icon>stop</mat-icon>
+          Stop Guiding
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

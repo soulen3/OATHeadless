@@ -62,10 +62,12 @@ export class ObjectSelectionDialogComponent implements OnInit {
   }
 
   loadMessierCatalog() {
-    this.http.get<MessierObject[]>('assets/messier.json').subscribe({
+    console.log('Loading Messier catalog...');
+    this.http.get<MessierObject[]>('static/messier.json').subscribe({
       next: (messierData) => {
+        console.log('Raw Messier data:', messierData);
         this.catalogObjects = messierData.map(obj => ({
-          name: obj.name ? `${obj.id} (${obj.name})` : obj.id,
+          name: obj.name && obj.name.trim() ? `${obj.id} (${obj.name})` : obj.id,
           ra: this.decimalToHMS(obj.ra),
           dec: this.decimalToDMS(obj.dec),
           type: obj.type,
@@ -84,6 +86,7 @@ export class ObjectSelectionDialogComponent implements OnInit {
           { name: 'M13 (Hercules Cluster)', ra: '16:41:41', dec: '+36:27:37', type: 'Globular cluster', magnitude: 5.8, constellation: 'Hercules' }
         ];
         this.filteredObjects = [...this.catalogObjects];
+        console.log('Using fallback objects');
       }
     });
   }

@@ -5,6 +5,7 @@ CLIENT_DIR = client
 SERVER_DIR = server
 DIST_DIR = dist
 VENV_DIR = $(SERVER_DIR)/venv
+ASSETS_DIR = assets
 PYTHON = ./venv/bin/python
 PIP = $(VENV_DIR)/bin/pip
 
@@ -101,6 +102,8 @@ build-manual:
 .PHONY: package
 package: deploy-client
 	@echo "Creating application bundle..."
+	mkdir -p $(SERVER_DIR)/static/
+	cp $(ASSETS_DIR)/* $(SERVER_DIR)/static/
 	mkdir -p $(DIST_DIR)
 	tar -czf $(DIST_DIR)/oatheadless-bundle.tar.gz --exclude='venv' server/
 	@echo "Bundle created: $(DIST_DIR)/oatheadless-bundle.tar.gz"

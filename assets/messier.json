@@ -108,5 +108,5 @@
     {"id": "M107",  "ngc": "NGC 6171",                 "name": "",                                            "type": "Globular cluster",                              "constellation": "Ophiuchus",           "magnitude": 8.9,   "ra": 16.5419,      "dec": -12.9463     },
     {"id": "M108",  "ngc": "NGC 3556",                 "name": "",                                            "type": "Barred Spiral galaxy",                          "constellation": "Ursa Major",          "magnitude": 10.7,  "ra": 11.1919,      "dec": 55.6741      },
     {"id": "M109",  "ngc": "NGC 3992",                 "name": "",                                            "type": "Barred Spiral galaxy",                          "constellation": "Ursa Major",          "magnitude": 10.6,  "ra": 11.9599,      "dec": 53.3744      },
-    {"id": "M110",  "ngc": "NGC 205",                  "name": "",                                            "type": "Dwarf elliptical galaxy",                       "constellation": "Andromeda",           "magnitude": 9,     "ra": 0.6727,       "dec": 41.6852      },
+    {"id": "M110",  "ngc": "NGC 205",                  "name": "",                                            "type": "Dwarf elliptical galaxy",                       "constellation": "Andromeda",           "magnitude": 9,     "ra": 0.6727,       "dec": 41.6852      }
 ]

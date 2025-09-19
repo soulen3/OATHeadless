@@ -1,22 +1,8 @@
 <div class="controller-container">
-  <!-- Position Card -->
-  <mat-card class="status-card">
-    <mat-card-header>
-      <mat-card-title>Mount Position</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <app-coordinate-display [ra]="currentPosition.ra" [dec]="currentPosition.dec"></app-coordinate-display>
-      <button mat-raised-button color="primary" (click)="updatePosition()">
-        <mat-icon>refresh</mat-icon>
-        Refresh Position
-      </button>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Connection & Tracking Card -->
+  <!-- Connection & Device Status Card -->
   <mat-card class="control-card">
     <mat-card-header>
-      <mat-card-title>Connection & Tracking</mat-card-title>
+      <mat-card-title>Connection & Device Status</mat-card-title>
       <mat-card-subtitle>
         <span [class]="isConnected ? 'status-connected' : 'status-disconnected'">
           {{ isConnected ? 'Connected' : 'Disconnected' }}
@@ -34,16 +20,7 @@
         <mat-icon>{{ isTracking ? 'pause' : 'play_arrow' }}</mat-icon>
         {{ isTracking ? 'Stop Tracking' : 'Start Tracking' }}
       </button>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Device Status Card -->
-  <mat-card class="control-card">
-    <mat-card-header>
-      <mat-card-title>Device Status</mat-card-title>
-      <mat-card-subtitle>Camera and guider connection status</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
+      
       <div class="device-status">
         <div class="device-item">
           <mat-icon [class]="cameraStatus.connected ? 'status-connected' : 'status-disconnected'">
@@ -67,26 +44,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- INDI Server Card -->
-  <mat-card class="control-card">
-    <mat-card-header>
-      <mat-card-title>INDI Server</mat-card-title>
-      <mat-card-subtitle>
-        <span [class]="isIndiConnected ? 'status-connected' : 'status-disconnected'">
-          {{ isIndiConnected ? 'INDI Connected' : 'INDI Disconnected' }}
-        </span>
-      </mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <button mat-raised-button 
-              [color]="isIndiConnected ? 'warn' : 'primary'" 
-              (click)="toggleIndiConnection()">
-        <mat-icon>{{ isIndiConnected ? 'link_off' : 'link' }}</mat-icon>
-        {{ isIndiConnected ? 'Disconnect INDI' : 'Connect INDI' }}
-      </button>
-    </mat-card-content>
-  </mat-card>
-
   <!-- Home & Park Card -->
   <mat-card class="control-card">
     <mat-card-header>
@@ -94,6 +51,23 @@
       <mat-card-subtitle>Home position and parking controls</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
+      <form [formGroup]="homingOffsetForm" class="offset-form">
+        <div class="offset-inputs">
+          <div class="offset-input">
+            <label>RA Offset:</label>
+            <input formControlName="raOffset" type="number" step="0.1">
+          </div>
+          <div class="offset-input">
+            <label>DEC Offset:</label>
+            <input formControlName="decOffset" type="number" step="0.1">
+          </div>
+        </div>
+        <button mat-raised-button color="primary" (click)="setHomingOffset()" [disabled]="!isConnected || isIndiConnected">
+          <mat-icon>tune</mat-icon>
+          Set Offset
+        </button>
+      </form>
+
       <div class="button-grid">
         <button mat-raised-button color="accent" (click)="homeRA()" [disabled]="!isConnected || isIndiConnected">
           <mat-icon>home</mat-icon>
@@ -119,11 +93,24 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Position Card -->
+  <mat-card class="status-card">
+    <mat-card-header>
+      <mat-card-title>Mount Position</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-coordinate-display [ra]="currentPosition.ra" [dec]="currentPosition.dec"></app-coordinate-display>
+      <button mat-raised-button color="primary" (click)="updatePosition()">
+        <mat-icon>refresh</mat-icon>
+        Refresh Position
+      </button>
+    </mat-card-content>
+  </mat-card>
+
   <!-- Target Selection Card -->
   <mat-card class="control-card">
     <mat-card-header>
-      <mat-card-title>Target Selection</mat-card-title>
-      <mat-card-subtitle>Set target coordinates</mat-card-subtitle>
+      <mat-card-title>Target Selection/Coordinate Input</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="targetForm" (ngSubmit)="setTarget()" class="target-form">
@@ -185,6 +172,44 @@
             <mat-icon>keyboard_arrow_down</mat-icon>
           </button>
         </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- INDI Server Card -->
+  <mat-card class="control-card">
+    <mat-card-header>
+      <mat-card-title>INDI Server</mat-card-title>
+      <mat-card-subtitle>
+        <span [class]="isIndiServerRunning ? 'status-connected' : 'status-disconnected'">
+          Server: {{ isIndiServerRunning ? 'Running' : 'Stopped' }}
+        </span>
+        <span *ngIf="isIndiServerRunning" [class]="isIndiConnected ? 'status-connected' : 'status-disconnected'">
+          • {{ isIndiConnected ? 'Connected' : 'Disconnected' }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="button-grid">
+        <button mat-raised-button color="accent" (click)="startIndiServer()" [disabled]="isIndiServerRunning">
+          <mat-icon>play_arrow</mat-icon>
+          Start Server
+        </button>
+        <button mat-raised-button color="warn" (click)="stopIndiServer()" [disabled]="!isIndiServerRunning">
+          <mat-icon>stop</mat-icon>
+          Stop Server
+        </button>
+        <button mat-raised-button 
+                [color]="isIndiConnected ? 'warn' : 'primary'" 
+                (click)="toggleIndiConnection()"
+                [disabled]="!isIndiServerRunning">
+          <mat-icon>{{ isIndiConnected ? 'link_off' : 'link' }}</mat-icon>
+          {{ isIndiConnected ? 'Disconnect Mount' : 'Connect Mount' }}
+        </button>
+        <a mat-raised-button href="/indi" target="_blank" [class.disabled]="!isIndiServerRunning">
+          <mat-icon>web</mat-icon>
+          Web Manager
+        </a>
       </div>
     </mat-card-content>
   </mat-card>

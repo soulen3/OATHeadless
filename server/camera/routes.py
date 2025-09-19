@@ -5,7 +5,7 @@ import os
 
 from flask import Blueprint, abort, jsonify
 
-from .cameras import get_camera_list
+from .cameras import CVCamera, get_camera_list
 
 camera_bp = Blueprint("camera", __name__, url_prefix="/api/camera")
 
@@ -24,6 +24,24 @@ def get_configured_camera():
 def index():
     """Test Route"""
     return jsonify({"message": "This is the camera blueprint"})
+
+
+@camera_bp.route("/capture")
+def capture():
+    """Capture image from configured camera"""
+    configured_device = get_configured_camera()
+    if not configured_device:
+        return jsonify({"error": "No camera configured"}), 400
+
+    try:
+        # Use index 0 for the first available camera
+        camera = CVCamera("camera", 0)
+        filename = camera.get_image()
+        return jsonify({"filename": filename, "message": "Image captured successfully"})
+    except ValueError:
+        return jsonify({"error": "Invalid camera device format"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to capture image: {str(e)}"}), 500
 
 
 @camera_bp.route("/status")
