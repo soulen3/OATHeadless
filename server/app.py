@@ -1,9 +1,14 @@
 """Define error handling and generic routes."""
 
+import glob
+import gphoto2 as gp
 import logging
+import os
+import subprocess
 import time
 from datetime import datetime
 
+import serial.tools.list_ports
 from flask import (Flask, abort, jsonify, render_template, request,
                    send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -61,65 +66,9 @@ def client_app(path=None):
     return render_template("index.html")
 
 
-@app.route("/api/guider/capture")
-def capture_guider_image():
-    """Capture image from guider device."""
-    import base64
-    import json
-    import os
-
-    import cv2
-
-    # Get configured guider device
-    config_file = "device_config.json"
-    guider_device = ""
-
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, "r") as f:
-                config = json.load(f)
-                guider_device = config.get("guiderDevice", "")
-        except:
-            pass
-
-    if not guider_device or not os.path.exists(guider_device):
-        return jsonify({"error": "Guider device not configured or not available"}), 400
-
-    try:
-        # Extract video device number from path (e.g., /dev/video0 -> 0)
-        device_num = int(guider_device.split("video")[-1])
-
-        # Capture image using OpenCV
-        cap = cv2.VideoCapture(device_num)
-        if not cap.isOpened():
-            return jsonify({"error": "Failed to open guider device"}), 500
-
-        ret, frame = cap.read()
-        cap.release()
-
-        if not ret:
-            return jsonify({"error": "Failed to capture image"}), 500
-
-        # Encode image as base64 JPEG
-        _, buffer = cv2.imencode(".jpg", frame)
-        img_base64 = base64.b64encode(buffer).decode("utf-8")
-
-        return jsonify(
-            {"image": f"data:image/jpeg;base64,{img_base64}", "timestamp": time.time()}
-        )
-
-    except Exception as e:
-        return jsonify({"error": f"Image capture failed: {str(e)}"}), 500
-
-
 @app.route("/api/devices")
 def list_devices():
     """List available serial and USB devices."""
-    import glob
-    import os
-    import subprocess
-
-    import serial.tools.list_ports
 
     devices = []
 
@@ -149,10 +98,9 @@ def list_devices():
         current_camera = None
 
         for line in lines:
-            line = line.strip()
             if line and not line.startswith("\t") and not line.startswith(" "):
                 # Camera name line
-                current_camera = line.rstrip(":")
+                current_camera = line.split(":")[0]
             elif line.startswith("\t/dev/video") and current_camera:
                 # First video device for this camera
                 device_path = line.strip()
@@ -163,7 +111,6 @@ def list_devices():
                         "hwid": "",
                         "vid": None,
                         "pid": None,
-                        "manufacturer": "Unknown",
                         "product": current_camera,
                         "type": "video",
                     }
@@ -171,26 +118,23 @@ def list_devices():
                 current_camera = None  # Only take first device per camera
 
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback to old method if v4l2-ctl not available
-        pass
+        logger.warning("gphoto2 not found")
 
-    # USB devices (for guiders)
-    usb_devices = glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
-    for device in usb_devices:
-        # Skip if already in serial ports
-        if not any(d["device"] == device for d in devices):
-            devices.append(
-                {
-                    "device": device,
-                    "description": f"USB device {os.path.basename(device)}",
-                    "hwid": "",
-                    "vid": None,
-                    "pid": None,
-                    "manufacturer": "Unknown",
-                    "product": f"USB Device {os.path.basename(device)}",
-                    "type": "usb",
-                }
-            )
+    # Get gphoto2 supported cameras
+    port_info_list = gp.PortInfoList()
+    port_info_list.load()
+    abilities_list = gp.CameraAbilitiesList()
+    abilities_list.load()
+
+    # Detect cameras
+    cameras = abilities_list.detect(port_info_list)
+    for camera in cameras:
+       devices.append(
+            {
+                "device": camera,
+                "type": "camera",
+            }
+        )
 
     return jsonify({"devices": devices})
 
