@@ -106,11 +106,11 @@
 
               <h3>Camera</h3>
               <mat-form-field>
-                <mat-label>USB/Video Device</mat-label>
+                <mat-label>Gphoto2</mat-label>
                 <mat-select formControlName="cameraDevice">
                   <mat-option value="">None</mat-option>
-                  <mat-option *ngFor="let device of videoDevices" [value]="device.device">
-                    {{device.device}} - {{device.description}}
+                  <mat-option *ngFor="let device of cameraDevices" [value]="device.device">
+                    {{device.device}}
                   </mat-option>
                 </mat-select>
               </mat-form-field>

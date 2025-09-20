@@ -46,7 +46,6 @@ export class SettingsComponent implements OnInit {
   errorMessage = '';
   locationForm: FormGroup;
   deviceForm: FormGroup;
-  useTime = '';
   availableDevices: Device[] = [];
 
   constructor(
@@ -72,6 +71,10 @@ export class SettingsComponent implements OnInit {
 
   get videoDevices() {
     return this.availableDevices.filter(device => device.type === 'video');
+  }
+  
+  get cameraDevices() {
+    return this.availableDevices.filter(device => device.type === 'camera');
   }
 
   ngOnInit() {
@@ -220,26 +223,10 @@ export class SettingsComponent implements OnInit {
 
     this.http.post('/api/mount/datetime', payload).subscribe({
       next: (response: any) => {
-        const dateSuccess = response.date_set === true;
-        const timeSuccess = response.time_set === true;
-        
-        if (dateSuccess && timeSuccess) {
-          this.useTime = utcNow.toISOString();
-          this.errorMessage = '';
-          this.messageService.addMessage('UTC time set successfully on mount', 'success');
-        } else if (dateSuccess || timeSuccess) {
-          this.useTime = utcNow.toISOString();
-          this.errorMessage = '';
-          const partial = dateSuccess ? 'Date set, time failed' : 'Time set, date failed';
-          this.messageService.addMessage(`Partial success: ${partial}`, 'info');
-        } else {
-          this.errorMessage = 'Failed to set date/time on mount';
-          this.messageService.addMessage('Failed to set date/time on mount', 'error');
-        }
+        this.messageService.addMessage('Time set successfully', 'success');
       },
       error: (error) => {
-        this.errorMessage = error.error?.error || 'Failed to communicate with mount';
-        this.messageService.addMessage('Failed to set time: ' + this.errorMessage, 'error');
+        this.messageService.addMessage('Failed to set time: ' + (error.error?.error || error.message), 'error');
       }
     });
   }
