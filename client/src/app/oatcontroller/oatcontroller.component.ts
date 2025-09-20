@@ -35,7 +35,6 @@ import { ObjectSelectionDialogComponent } from '../shared/object-selection-dialo
 export class OATControllerComponent implements OnInit {
   currentPosition = { ra: '--:--:--', dec: '--:--:--' };
   targetForm: FormGroup;
-  homingOffsetForm: FormGroup;
   isConnected = false;
   isTracking = false;
   isIndiConnected = false;
@@ -51,11 +50,6 @@ export class OATControllerComponent implements OnInit {
     this.targetForm = new FormGroup({
       ra: new FormControl('', [Validators.required]),
       dec: new FormControl('', [Validators.required])
-    });
-
-    this.homingOffsetForm = new FormGroup({
-      raOffset: new FormControl(0),
-      decOffset: new FormControl(0)
     });
   }
 
@@ -272,20 +266,6 @@ export class OATControllerComponent implements OnInit {
         }
       });
     }
-  }
-
-  setHomingOffset() {
-    const offsets = this.homingOffsetForm.value;
-    this.messageService.addMessage(`Setting homing offset: RA ${offsets.raOffset}, DEC ${offsets.decOffset}`, 'info');
-    
-    this.http.post('/api/mount/home/offset', offsets).subscribe({
-      next: (response: any) => {
-        this.messageService.addMessage('Homing offset set successfully', 'success');
-      },
-      error: (error) => {
-        this.messageService.addMessage('Failed to set homing offset: ' + (error.error?.error || error.message), 'error');
-      }
-    });
   }
 
   manualMove(direction: string) {

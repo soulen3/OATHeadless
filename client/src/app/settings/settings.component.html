@@ -48,10 +48,6 @@
               <mat-icon>schedule</mat-icon>
               Set Current Time
             </button>
-            <p *ngIf="useTime" class="time-display">
-              <mat-icon>check_circle</mat-icon>
-              Time set: {{ useTime | date:'medium' }}
-            </p>
           </mat-card-content>
         </mat-card>
       </div>
@@ -118,6 +114,33 @@
               <button mat-raised-button color="accent" type="submit">
                 <mat-icon>save</mat-icon>
                 Save Device Configuration
+              </button>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Mount Configuration">
+      <div class="tab-content">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Homing Offset</mat-card-title>
+            <mat-card-subtitle>Configure mount homing position offsets</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <form [formGroup]="homingOffsetForm" class="offset-form">
+              <mat-form-field>
+                <mat-label>RA Offset</mat-label>
+                <input matInput formControlName="raOffset" type="number" step="0.1">
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>DEC Offset</mat-label>
+                <input matInput formControlName="decOffset" type="number" step="0.1">
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="setHomingOffset()">
+                <mat-icon>tune</mat-icon>
+                Set Homing Offset
               </button>
             </form>
           </mat-card-content>

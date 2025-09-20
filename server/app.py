@@ -1,13 +1,13 @@
 """Define error handling and generic routes."""
 
 import glob
-import gphoto2 as gp
 import logging
 import os
 import subprocess
 import time
 from datetime import datetime
 
+import gphoto2 as gp
 import serial.tools.list_ports
 from flask import (Flask, abort, jsonify, render_template, request,
                    send_from_directory)
@@ -64,6 +64,12 @@ def not_implemented(e):  # pylint: disable=unused-argument
 def client_app(path=None):
     """Serve the Angular client application."""
     return render_template("index.html")
+
+
+@app.route("/favicon.ico")
+def send_favicon():
+    """Serve favicon."""
+    return send_file("static/favicon.ico")
 
 
 @app.route("/api/devices")
@@ -129,7 +135,7 @@ def list_devices():
     # Detect cameras
     cameras = abilities_list.detect(port_info_list)
     for camera in cameras:
-       devices.append(
+        devices.append(
             {
                 "device": camera,
                 "type": "camera",

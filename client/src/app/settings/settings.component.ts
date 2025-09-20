@@ -46,6 +46,7 @@ export class SettingsComponent implements OnInit {
   errorMessage = '';
   locationForm: FormGroup;
   deviceForm: FormGroup;
+  homingOffsetForm: FormGroup;
   availableDevices: Device[] = [];
 
   constructor(
@@ -62,6 +63,11 @@ export class SettingsComponent implements OnInit {
       telescopeBaudrate: new FormControl(9600),
       guiderDevice: new FormControl(''),
       cameraDevice: new FormControl('')
+    });
+
+    this.homingOffsetForm = new FormGroup({
+      raOffset: new FormControl(0),
+      decOffset: new FormControl(0)
     });
   }
 
@@ -80,6 +86,7 @@ export class SettingsComponent implements OnInit {
   ngOnInit() {
     this.loadAvailableDevices();
     this.loadDeviceConfiguration();
+    this.loadHomingOffset();
   }
 
   loadDeviceConfiguration() {
@@ -227,6 +234,31 @@ export class SettingsComponent implements OnInit {
       },
       error: (error) => {
         this.messageService.addMessage('Failed to set time: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  loadHomingOffset() {
+    this.http.get('/api/mount/home/offset').subscribe({
+      next: (response: any) => {
+        this.homingOffsetForm.patchValue(response);
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to load homing offset: ' + (error.error?.error || error.message), 'error');
+      }
+    });
+  }
+
+  setHomingOffset() {
+    const offsets = this.homingOffsetForm.value;
+    this.messageService.addMessage(`Setting homing offset: RA ${offsets.raOffset}, DEC ${offsets.decOffset}`, 'info');
+    
+    this.http.post('/api/mount/home/offset', offsets).subscribe({
+      next: (response: any) => {
+        this.messageService.addMessage('Homing offset set successfully', 'success');
+      },
+      error: (error) => {
+        this.messageService.addMessage('Failed to set homing offset: ' + (error.error?.error || error.message), 'error');
       }
     });
   }
