@@ -35,6 +35,21 @@ mat-card
   align-items: center
   gap: 8px
 
+
+.mat-mdc-option.mdc-list-item
+ background-color: var(--background)
+ opacity: 1
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled):not(.mat-mdc-option-multiple)
+ background-color: var(--accent)
+ opacity: 1
+
+.mat-mdc-option.mdc-list-item:hover,
+.mat-mdc-option.mdc-list-item--selected:hover,
+.mat-mdc-option.mat-option:hover 
+  opacity: 1 !important
+  background-color: #252525
+
 .device-form
   margin-top: 20px
   display: flex
@@ -45,9 +60,6 @@ mat-card
     margin-top: 24px
     margin-bottom: 8px
     color: #666
-
-  mat-select
-    z-index: 1000
 
 .offset-form
   margin-top: 20px

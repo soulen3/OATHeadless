@@ -76,7 +76,8 @@ def get_all_status():
             pass
 
     camera_status = {
-        "connected": os.path.exists(camera_device) if camera_device else False,
+        # TODO: get camera status with gphoto2.
+        "connected": False,
         "device": camera_device,
     }
 

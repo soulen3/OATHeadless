@@ -241,7 +241,10 @@ export class SettingsComponent implements OnInit {
   loadHomingOffset() {
     this.http.get('/api/mount/home/offset').subscribe({
       next: (response: any) => {
-        this.homingOffsetForm.patchValue(response);
+        this.homingOffsetForm.patchValue({
+          raOffset: response.ra_offset,
+          decOffset: response.dec_offset
+        });
       },
       error: (error) => {
         this.messageService.addMessage('Failed to load homing offset: ' + (error.error?.error || error.message), 'error');

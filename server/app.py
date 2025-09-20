@@ -9,7 +9,7 @@ from datetime import datetime
 
 import gphoto2 as gp
 import serial.tools.list_ports
-from flask import (Flask, abort, jsonify, render_template, request,
+from flask import (Flask, abort, jsonify, render_template, request, send_file,
                    send_from_directory)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
